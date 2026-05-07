@@ -669,9 +669,7 @@ st.markdown(
     border: 1px solid var(--border);
     border-radius: 32px;
     padding: 0;
-    background-color: var(--navy-900);
-    background-size: cover;
-    background-position: center center;
+    background: var(--navy-900);
     box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
     margin-bottom: 14px;
 }
@@ -681,7 +679,7 @@ st.markdown(
     position: absolute;
     inset: 0;
     background: linear-gradient(90deg, rgba(6,20,51,.72) 0%, rgba(6,20,51,.30) 42%, rgba(6,20,51,.05) 100%);
-    z-index: 0;
+    z-index: 1;
 }
 
 .hero::after {
@@ -702,12 +700,22 @@ st.markdown(
 
 .hero-content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
     min-height: 360px;
     padding: 28px;
+}
+
+.hero-bg-img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
 }
 
 .hero-kicker {
@@ -957,20 +965,45 @@ def image_to_data_uri(path: str) -> str:
     file_path = Path(path)
     if not file_path.exists():
         return ""
-    mime = "image/png" if file_path.suffix.lower() == ".png" else "image/jpeg"
+    suffix = file_path.suffix.lower()
+    if suffix in [".jpg", ".jpeg"]:
+        mime = "image/jpeg"
+    elif suffix == ".webp":
+        mime = "image/webp"
+    else:
+        mime = "image/png"
     encoded = base64.b64encode(file_path.read_bytes()).decode("utf-8")
     return f"data:{mime};base64,{encoded}"
 
 
+def find_logo_data_uri() -> str:
+    possible_paths = [
+        "logo.png",
+        "logo.jpg",
+        "logo.jpeg",
+        "app/static/logo.png",
+        "app/static/logo.jpg",
+        "app/static/logo.jpeg",
+        "static/logo.png",
+        "static/logo.jpg",
+        "static/logo.jpeg",
+    ]
+    for path in possible_paths:
+        data_uri = image_to_data_uri(path)
+        if data_uri:
+            return data_uri
+    return ""
+
+
 def render_hero():
     translator_status = "Online translation ready" if GoogleTranslator else "Offline fallback mode"
-    # Put logo.png in the same folder as app.py. The code also supports app/static/logo.png.
-    bg_uri = image_to_data_uri("logo.png") or image_to_data_uri("app/static/logo.png")
-    bg_style = f' style="background-image: url({bg_uri});"' if bg_uri else ""
+    bg_uri = find_logo_data_uri()
+    img_html = f'<img class="hero-bg-img" src="{bg_uri}" alt="Erdem Hospital">' if bg_uri else ""
 
     st.markdown(
         f"""
-<div class="hero"{bg_style}>
+<div class="hero">
+  {img_html}
   <div class="hero-content">
     <div class="hero-kicker"><span></span>{translator_status}</div>
   </div>
