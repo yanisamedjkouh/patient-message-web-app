@@ -180,19 +180,6 @@ LABELS = {
     },
 }
 
-DEFAULT_SAMPLE = """Natalja Repnikova
-47 years old
-1 m 76 sm
-60 kg
-
-I don't have any diseases
-No any infections
-I had surgery before
-
-I don't take any medication
-No any allergy
-Sometimes alcohol and some smoke"""
-
 # ─────────────────────────────────────────────
 # LOGIC HELPERS
 # ─────────────────────────────────────────────
@@ -637,69 +624,62 @@ st.markdown(
     """
 <style>
 :root {
-    --bg0: #060914;
-    --bg1: #0b1020;
-    --card: rgba(15, 23, 42, 0.76);
-    --card2: rgba(30, 41, 59, 0.58);
-    --border: rgba(148, 163, 184, 0.22);
-    --text: #eef5ff;
-    --muted: #94a3b8;
-    --cyan: #22d3ee;
-    --blue: #60a5fa;
-    --green: #34d399;
-    --violet: #a78bfa;
-    --orange: #fb923c;
-    --danger: #fb7185;
+    --bg: #ffffff;
+    --soft: #f7f8fc;
+    --card: rgba(255, 255, 255, 0.92);
+    --card2: #ffffff;
+    --border: rgba(34, 43, 91, 0.14);
+    --text: #222b5b;
+    --muted: #6b7280;
+    --navy: #222b5b;
+    --red: #e30613;
+    --red2: #ff3342;
+    --blue-soft: #eef2ff;
+    --green: #16a34a;
+    --orange: #f97316;
 }
 
 .stApp {
     background:
-        radial-gradient(circle at 12% 12%, rgba(34, 211, 238, 0.16), transparent 30%),
-        radial-gradient(circle at 88% 8%, rgba(167, 139, 250, 0.14), transparent 28%),
-        radial-gradient(circle at 55% 100%, rgba(52, 211, 153, 0.10), transparent 26%),
-        linear-gradient(135deg, var(--bg0), var(--bg1));
+        radial-gradient(circle at 8% 0%, rgba(227, 6, 19, 0.06), transparent 30%),
+        radial-gradient(circle at 95% 8%, rgba(34, 43, 91, 0.08), transparent 28%),
+        linear-gradient(180deg, #ffffff, #f7f8fc 74%, #ffffff);
     color: var(--text);
 }
 
 .block-container {
-    padding-top: 1.35rem;
-    padding-bottom: 1.35rem;
-    max-width: 1450px;
+    padding-top: 1.2rem;
+    padding-bottom: 1.2rem;
+    max-width: 1420px;
 }
 
-[data-testid="stHeader"] {
-    background: transparent;
-}
-
-[data-testid="stToolbar"] {
-    display: none;
-}
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stToolbar"] { display: none; }
 
 .hero {
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: 28px;
-    padding: 26px 28px;
-    background: linear-gradient(135deg, rgba(15,23,42,.78), rgba(17,24,39,.44));
-    box-shadow: 0 24px 90px rgba(0,0,0,.34);
-    backdrop-filter: blur(18px);
+    border-radius: 30px;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(247,248,252,.94));
+    box-shadow: 0 22px 70px rgba(34, 43, 91, .10);
     margin-bottom: 18px;
 }
 
 .hero:before {
     content: "";
     position: absolute;
-    inset: -2px;
-    background: linear-gradient(90deg, transparent, rgba(34,211,238,.20), transparent);
-    transform: translateX(-78%);
-    animation: scan 5.5s infinite;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(227,6,19,.08), transparent);
+    transform: translateX(-85%);
+    animation: scan 6s infinite;
 }
 
 @keyframes scan {
-    0% { transform: translateX(-78%); }
-    50% { transform: translateX(78%); }
-    100% { transform: translateX(78%); }
+    0% { transform: translateX(-85%); }
+    55% { transform: translateX(85%); }
+    100% { transform: translateX(85%); }
 }
 
 .hero-content {
@@ -711,14 +691,41 @@ st.markdown(
     gap: 22px;
 }
 
+.brand-left {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.logo-wrap {
+    width: 112px;
+    height: 112px;
+    border-radius: 26px;
+    background: #ffffff;
+    border: 1px solid rgba(34, 43, 91, .12);
+    box-shadow: 0 18px 42px rgba(34,43,91,.10);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.logo-wrap img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
 .title-wrap h1 {
     margin: 0;
-    font-size: clamp(2rem, 4vw, 4rem);
-    line-height: .96;
+    font-size: clamp(2rem, 4vw, 4.2rem);
+    line-height: .94;
     letter-spacing: -0.065em;
-    background: linear-gradient(90deg, #e0f7ff, #7dd3fc, #c4b5fd);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--navy);
+}
+
+.title-wrap h1 span {
+    color: var(--red);
 }
 
 .title-wrap p {
@@ -733,33 +740,33 @@ st.markdown(
     gap: 8px;
     padding: 10px 13px;
     border-radius: 999px;
-    border: 1px solid rgba(34,211,238,.26);
-    background: rgba(34,211,238,.08);
-    color: #a5f3fc;
+    border: 1px solid rgba(227,6,19,.20);
+    background: rgba(227,6,19,.06);
+    color: var(--navy);
     font-size: .88rem;
     white-space: nowrap;
+    font-weight: 700;
 }
 
 .pulse {
     width: 9px;
     height: 9px;
     border-radius: 999px;
-    background: var(--green);
-    box-shadow: 0 0 0 0 rgba(52,211,153,.65);
+    background: var(--red);
+    box-shadow: 0 0 0 0 rgba(227,6,19,.55);
     animation: pulse 1.8s infinite;
 }
 
 @keyframes pulse {
-    70% { box-shadow: 0 0 0 9px rgba(52,211,153,0); }
-    100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+    70% { box-shadow: 0 0 0 9px rgba(227,6,19,0); }
+    100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
 }
 
 .glass-card {
     border: 1px solid var(--border);
     border-radius: 24px;
     background: var(--card);
-    box-shadow: 0 18px 60px rgba(0,0,0,.26);
-    backdrop-filter: blur(16px);
+    box-shadow: 0 18px 55px rgba(34,43,91,.08);
     padding: 18px;
     margin-bottom: 14px;
 }
@@ -768,8 +775,8 @@ st.markdown(
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #dbeafe;
-    font-weight: 800;
+    color: var(--navy);
+    font-weight: 900;
     letter-spacing: .08em;
     font-size: .82rem;
     text-transform: uppercase;
@@ -780,57 +787,59 @@ st.markdown(
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 14px rgba(34,211,238,.8);
+    background: var(--red);
+    box-shadow: 0 0 14px rgba(227,6,19,.42);
 }
 
 .stTextArea textarea, .stTextInput input {
-    background: rgba(2, 6, 23, 0.72) !important;
-    color: #eff6ff !important;
-    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: #ffffff !important;
+    color: var(--navy) !important;
+    border: 1px solid rgba(34, 43, 91, 0.16) !important;
     border-radius: 18px !important;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02) !important;
+    box-shadow: inset 0 0 0 1px rgba(34,43,91,.02) !important;
 }
 
 .stSelectbox div[data-baseweb="select"] > div {
-    background: rgba(2, 6, 23, 0.72) !important;
-    border-color: rgba(148, 163, 184, 0.22) !important;
+    background: #ffffff !important;
+    border-color: rgba(34, 43, 91, 0.16) !important;
     border-radius: 16px !important;
-    color: #eff6ff !important;
+    color: var(--navy) !important;
 }
 
 .stButton > button {
     width: 100%;
-    border: 1px solid rgba(125, 211, 252, .26);
+    border: 1px solid rgba(227,6,19,.18);
     border-radius: 18px;
     padding: .75rem 1rem;
-    color: #03131f;
-    font-weight: 800;
-    background: linear-gradient(90deg, #22d3ee, #60a5fa);
-    box-shadow: 0 12px 30px rgba(34, 211, 238, .16);
+    color: #ffffff;
+    font-weight: 900;
+    background: linear-gradient(90deg, var(--red), var(--red2));
+    box-shadow: 0 12px 30px rgba(227,6,19,.16);
     transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
 }
 
 .stButton > button:hover {
     transform: translateY(-1px);
-    filter: brightness(1.06);
-    box-shadow: 0 18px 44px rgba(96, 165, 250, .20);
+    filter: brightness(1.04);
+    box-shadow: 0 18px 44px rgba(227,6,19,.22);
+    color: #ffffff;
 }
 
 .result-card {
-    border: 1px solid rgba(148, 163, 184, 0.22);
+    border: 1px solid rgba(34,43,91,0.14);
     border-radius: 26px;
     padding: 18px;
-    background: rgba(2, 6, 23, 0.54);
+    background: #ffffff;
     min-height: 500px;
+    box-shadow: inset 0 0 0 1px rgba(34,43,91,.02);
 }
 
 .section {
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    border: 1px solid rgba(34,43,91,0.12);
     border-radius: 20px;
     padding: 14px 16px;
     margin: 0 0 12px 0;
-    background: linear-gradient(135deg, rgba(15,23,42,.72), rgba(15,23,42,.38));
+    background: linear-gradient(135deg, #ffffff, #fafbff);
 }
 
 .section h3 {
@@ -840,36 +849,30 @@ st.markdown(
     letter-spacing: .10em;
 }
 
-.req h3 { color: var(--cyan); }
-.personal h3 { color: var(--green); }
+.req h3 { color: var(--red); }
+.personal h3 { color: var(--navy); }
 .medical h3 { color: var(--orange); }
-.medallergy h3 { color: var(--violet); }
+.medallergy h3 { color: #6d28d9; }
 
 .grid-row {
     display: grid;
     grid-template-columns: minmax(130px, 210px) 1fr;
     gap: 12px;
     padding: 8px 0;
-    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    border-top: 1px solid rgba(34,43,91,0.10);
 }
 
-.grid-row:first-of-type {
-    border-top: none;
-}
+.grid-row:first-of-type { border-top: none; }
 
 .label {
-    color: #93a4bb;
+    color: #68708c;
     font-size: .90rem;
 }
 
 .value {
-    color: #f8fafc;
-    font-weight: 650;
+    color: var(--navy);
+    font-weight: 700;
     word-break: break-word;
-}
-
-.copy-box textarea {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 }
 
 .metric-strip {
@@ -881,14 +884,14 @@ st.markdown(
 
 .metric-card {
     padding: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    border: 1px solid rgba(34,43,91,0.12);
     border-radius: 18px;
-    background: rgba(15, 23, 42, .48);
+    background: linear-gradient(180deg, #ffffff, #f8f9ff);
 }
 
 .metric-card span {
     display: block;
-    color: var(--muted);
+    color: #747b95;
     font-size: .72rem;
     text-transform: uppercase;
     letter-spacing: .08em;
@@ -896,22 +899,26 @@ st.markdown(
 
 .metric-card strong {
     display: block;
-    color: #f8fafc;
+    color: var(--navy);
     font-size: 1.1rem;
     margin-top: 4px;
 }
 
 .info-note {
-    color: #94a3b8;
+    color: #68708c;
     font-size: .86rem;
     padding: 10px 12px;
-    border: 1px solid rgba(148, 163, 184, .18);
+    border: 1px solid rgba(34,43,91,.12);
     border-radius: 16px;
-    background: rgba(15,23,42,.42);
+    background: #ffffff;
 }
 
-hr {
-    border-color: rgba(148, 163, 184, 0.12);
+hr { border-color: rgba(34,43,91,0.10); }
+
+@media (max-width: 800px) {
+    .hero-content, .brand-left { flex-direction: column; align-items: flex-start; }
+    .metric-strip { grid-template-columns: repeat(2, 1fr); }
+    .logo-wrap { width: 90px; height: 90px; }
 }
 </style>
 """,
@@ -928,9 +935,12 @@ def render_hero():
         f"""
 <div class="hero">
   <div class="hero-content">
-    <div class="title-wrap">
-      <h1>Clinical Intake<br/>Formatter</h1>
-      <p>Transform messy multilingual patient answers into a clean English or Turkish doctor message.</p>
+    <div class="brand-left">
+      <div class="logo-wrap"><img src="app/static/logo.png" alt="Erdem Hospital logo"></div>
+      <div class="title-wrap">
+        <h1>Clinical Intake<br/><span>Formatter</span></h1>
+        <p>Erdem Hospital multilingual patient intake formatter — clean, structured, copy-ready.</p>
+      </div>
     </div>
     <div class="status-pill"><span class="pulse"></span>{translator_status}</div>
   </div>
@@ -1076,23 +1086,21 @@ with left:
     patient_text = st.text_area(
         "Paste raw patient answer",
         value="",
-        placeholder=DEFAULT_SAMPLE,
+        placeholder="Paste the patient's answers here...",
         height=460,
         label_visibility="collapsed",
     )
 
-    b1, b2, b3 = st.columns([1.35, 1, 1])
+    b1, b2 = st.columns([1.35, 1])
     with b1:
         generate = st.button("Generate message", type="primary", use_container_width=True)
     with b2:
-        sample = st.button("Load sample", use_container_width=True)
-    with b3:
         clear = st.button("Clear", use_container_width=True)
 
     st.markdown(
         """
 <div class="info-note">
-Tip: The app follows the question order: name, age, height, weight, chronic diseases, infections, surgeries, medications, allergies, smoke/alcohol.
+The app follows the order: name, age, height, weight, chronic diseases, infections, surgeries, medications, allergies, smoke/alcohol.
 </div>
 """,
         unsafe_allow_html=True,
@@ -1102,10 +1110,6 @@ Tip: The app follows the question order: name, age, height, weight, chronic dise
 with right:
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title"><span class="panel-dot" style="background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8)"></span>Doctor-ready output</div>', unsafe_allow_html=True)
-
-    if sample:
-        st.session_state.sample_loaded = True
-        st.rerun()
 
     if clear:
         st.session_state.generated_data = None
@@ -1126,11 +1130,6 @@ with right:
             st.text_area("Plain message", value=st.session_state.plain_message, height=280, label_visibility="collapsed")
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-if st.session_state.get("sample_loaded"):
-    st.session_state.sample_loaded = False
-    st.info("Sample loaded in the placeholder. Copy it from below if needed:")
-    st.code(DEFAULT_SAMPLE)
 
 st.markdown(
     """
