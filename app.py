@@ -665,7 +665,7 @@ st.markdown(
 .hero {
     position: relative;
     overflow: hidden;
-    min-height: 360px;
+    min-height: 420px;
     border: 1px solid var(--border);
     border-radius: 32px;
     padding: 0;
@@ -716,6 +716,7 @@ st.markdown(
     height: 100%;
     object-fit: cover;
     object-position: center center;
+    transform: scale(1.01);
 }
 
 .hero-kicker {
@@ -949,8 +950,9 @@ hr { border-color: rgba(255,255,255,0.10); }
 @media (max-width: 900px) {
     .clean-toolbar { grid-template-columns: 1fr; }
     .metric-strip { grid-template-columns: repeat(2, 1fr); }
-    .hero { min-height: 320px; background-position: center; }
-    .hero::before { background: rgba(6,20,51,.84); }
+    .hero { min-height: 300px; }
+    .hero::before { background: rgba(6,20,51,.60); }
+    .hero-bg-img { object-position: center center; transform: scale(1.02); }
 }
 </style>
 """,
