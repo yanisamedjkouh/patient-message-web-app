@@ -665,7 +665,9 @@ st.markdown(
 .hero {
     position: relative;
     overflow: hidden;
-    min-height: 420px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 0;
     border: 1px solid var(--border);
     border-radius: 32px;
     padding: 0;
@@ -699,13 +701,7 @@ st.markdown(
 }
 
 .hero-content {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    min-height: 360px;
-    padding: 28px;
+    display: none;
 }
 
 .hero-bg-img {
@@ -716,7 +712,6 @@ st.markdown(
     height: 100%;
     object-fit: cover;
     object-position: center center;
-    transform: scale(1.01);
 }
 
 .hero-kicker {
@@ -757,13 +752,19 @@ st.markdown(
 .hero-description strong { display: none; }
 
 .app-title-card {
+    width: 100%;
+    box-sizing: border-box;
     border: 1px solid var(--border);
-    border-radius: 24px;
+    border-radius: 32px;
     background: rgba(6, 20, 51, .72);
     box-shadow: 0 20px 60px rgba(0,0,0,.22);
-    padding: 18px 22px;
+    padding: 20px 24px;
     margin-bottom: 14px;
     backdrop-filter: blur(18px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
 }
 
 .app-title-card h1 {
@@ -781,6 +782,10 @@ st.markdown(
     color: #c8d4ec;
     font-size: .98rem;
     line-height: 1.55;
+}
+
+.app-title-text {
+    min-width: 0;
 }
 
 .glass-card {
@@ -950,9 +955,10 @@ hr { border-color: rgba(255,255,255,0.10); }
 @media (max-width: 900px) {
     .clean-toolbar { grid-template-columns: 1fr; }
     .metric-strip { grid-template-columns: repeat(2, 1fr); }
-    .hero { min-height: 300px; }
-    .hero::before { background: rgba(6,20,51,.60); }
-    .hero-bg-img { object-position: center center; transform: scale(1.02); }
+    .hero { aspect-ratio: 16 / 9; }
+    .hero::before { background: rgba(6,20,51,.18); }
+    .hero-bg-img { object-position: center center; }
+    .app-title-card { flex-direction: column; align-items: flex-start; }
 }
 </style>
 """,
@@ -1006,13 +1012,13 @@ def render_hero():
         f"""
 <div class="hero">
   {img_html}
-  <div class="hero-content">
-    <div class="hero-kicker"><span></span>{translator_status}</div>
-  </div>
 </div>
 <div class="app-title-card">
-  <h1>Clinical Intake Formatter</h1>
-  <p>A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
+  <div class="app-title-text">
+    <h1>Clinical Intake Formatter</h1>
+    <p>A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
+  </div>
+  <div class="hero-kicker"><span></span>{translator_status}</div>
 </div>
 """,
         unsafe_allow_html=True,
