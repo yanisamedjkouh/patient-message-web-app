@@ -665,24 +665,22 @@ st.markdown(
 .hero {
     position: relative;
     overflow: hidden;
-    min-height: 250px;
+    min-height: 360px;
     border: 1px solid var(--border);
     border-radius: 32px;
-    padding: 30px;
+    padding: 0;
     background-color: var(--navy-900);
     background-size: cover;
-    background-position: center right;
+    background-position: center center;
     box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .hero::before {
     content: "";
     position: absolute;
     inset: 0;
-    background:
-        linear-gradient(90deg, rgba(6,20,51,.96) 0%, rgba(6,20,51,.82) 34%, rgba(6,20,51,.46) 58%, rgba(6,20,51,.20) 100%),
-        linear-gradient(180deg, rgba(6,20,51,.12), rgba(6,20,51,.80));
+    background: linear-gradient(90deg, rgba(6,20,51,.72) 0%, rgba(6,20,51,.30) 42%, rgba(6,20,51,.05) 100%);
     z-index: 0;
 }
 
@@ -705,11 +703,11 @@ st.markdown(
 .hero-content {
     position: relative;
     z-index: 1;
-    max-width: 680px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 190px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 360px;
+    padding: 28px;
 }
 
 .hero-kicker {
@@ -744,31 +742,36 @@ st.markdown(
     100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
 }
 
-.hero h1 {
+.hero h1 { display: none; }
+.hero h1 span { display: none; }
+.hero-description { display: none; }
+.hero-description strong { display: none; }
+
+.app-title-card {
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: rgba(6, 20, 51, .72);
+    box-shadow: 0 20px 60px rgba(0,0,0,.22);
+    padding: 18px 22px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(18px);
+}
+
+.app-title-card h1 {
     margin: 0;
-    color: var(--white);
-    font-size: clamp(2.25rem, 5vw, 4.7rem);
-    line-height: .92;
-    letter-spacing: -0.065em;
+    color: #ffffff;
+    font-size: clamp(1.45rem, 2.4vw, 2.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.035em;
     text-transform: uppercase;
 }
 
-.hero h1 span {
-    color: #f2f6ff;
-    font-weight: 300;
-    letter-spacing: .01em;
-}
-
-.hero-description {
-    margin: 16px 0 0 0;
-    max-width: 620px;
-    color: #d4def4;
-    font-size: 1rem;
-    line-height: 1.65;
-}
-
-.hero-description strong {
-    color: var(--white);
+.app-title-card p {
+    margin: 8px 0 0 0;
+    max-width: 900px;
+    color: #c8d4ec;
+    font-size: .98rem;
+    line-height: 1.55;
 }
 
 .glass-card {
@@ -961,18 +964,20 @@ def image_to_data_uri(path: str) -> str:
 
 def render_hero():
     translator_status = "Online translation ready" if GoogleTranslator else "Offline fallback mode"
+    # Put logo.png in the same folder as app.py. The code also supports app/static/logo.png.
     bg_uri = image_to_data_uri("logo.png") or image_to_data_uri("app/static/logo.png")
     bg_style = f' style="background-image: url({bg_uri});"' if bg_uri else ""
+
     st.markdown(
         f"""
 <div class="hero"{bg_style}>
   <div class="hero-content">
     <div class="hero-kicker"><span></span>{translator_status}</div>
-    <h1>Clinical Intake<br/><span>Formatter</span></h1>
-    <p class="hero-description">
-      A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured message for doctors in <strong>English</strong> or <strong>Turkish</strong>.
-    </p>
   </div>
+</div>
+<div class="app-title-card">
+  <h1>Clinical Intake Formatter</h1>
+  <p>A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
 </div>
 """,
         unsafe_allow_html=True,
@@ -1096,7 +1101,6 @@ if "generated_data" not in st.session_state:
 if "plain_message" not in st.session_state:
     st.session_state.plain_message = ""
 
-st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 top_a, top_b, top_c = st.columns([2.2, 1, 1])
 with top_a:
     requirement = st.text_input("Patient wants", placeholder="breast lift, rhinoplasty, lipoabdominoplasty…")
@@ -1104,7 +1108,6 @@ with top_b:
     patient_language = st.selectbox("Patient language", PATIENT_LANGUAGES, index=0)
 with top_c:
     doctor_language = st.selectbox("Doctor message", DOCTOR_MESSAGE_LANGUAGES, index=0)
-st.markdown('</div>', unsafe_allow_html=True)
 
 left, right = st.columns([1, 1], gap="large")
 
