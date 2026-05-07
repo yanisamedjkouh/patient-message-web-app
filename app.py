@@ -1,4 +1,6 @@
 import re
+import base64
+from pathlib import Path
 from html import escape
 
 import streamlit as st
@@ -624,31 +626,35 @@ st.markdown(
     """
 <style>
 :root {
-    --bg: #ffffff;
-    --soft: #f7f8fc;
-    --card: rgba(255, 255, 255, 0.92);
-    --card2: #ffffff;
-    --border: rgba(34, 43, 91, 0.14);
-    --text: #222b5b;
-    --muted: #6b7280;
-    --navy: #222b5b;
+    --navy-950: #061433;
+    --navy-900: #0a1a3f;
+    --navy-800: #122657;
+    --navy-700: #1f3265;
     --red: #e30613;
-    --red2: #ff3342;
-    --blue-soft: #eef2ff;
-    --green: #16a34a;
-    --orange: #f97316;
+    --red-soft: rgba(227, 6, 19, .12);
+    --white: #ffffff;
+    --soft: #eaf0fb;
+    --muted: #a9b7d4;
+    --muted-2: #61708f;
+    --border: rgba(255,255,255,.13);
+    --card: rgba(6, 20, 51, .72);
+    --card-solid: #0b1b42;
+    --field: rgba(255,255,255,.08);
+    --green: #22c55e;
+    --orange: #fb923c;
+    --violet: #a78bfa;
 }
 
 .stApp {
     background:
-        radial-gradient(circle at 8% 0%, rgba(227, 6, 19, 0.06), transparent 30%),
-        radial-gradient(circle at 95% 8%, rgba(34, 43, 91, 0.08), transparent 28%),
-        linear-gradient(180deg, #ffffff, #f7f8fc 74%, #ffffff);
-    color: var(--text);
+        radial-gradient(circle at 10% 12%, rgba(227, 6, 19, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 0%, rgba(96, 165, 250, 0.18), transparent 24%),
+        linear-gradient(135deg, var(--navy-950), var(--navy-900) 42%, #07112b 100%);
+    color: var(--white);
 }
 
 .block-container {
-    padding-top: 1.2rem;
+    padding-top: 1.1rem;
     padding-bottom: 1.2rem;
     max-width: 1420px;
 }
@@ -659,21 +665,35 @@ st.markdown(
 .hero {
     position: relative;
     overflow: hidden;
+    min-height: 250px;
     border: 1px solid var(--border);
-    border-radius: 30px;
-    padding: 24px 28px;
-    background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(247,248,252,.94));
-    box-shadow: 0 22px 70px rgba(34, 43, 91, .10);
+    border-radius: 32px;
+    padding: 30px;
+    background-color: var(--navy-900);
+    background-size: cover;
+    background-position: center right;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
     margin-bottom: 18px;
 }
 
-.hero:before {
+.hero::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(227,6,19,.08), transparent);
+    background:
+        linear-gradient(90deg, rgba(6,20,51,.96) 0%, rgba(6,20,51,.82) 34%, rgba(6,20,51,.46) 58%, rgba(6,20,51,.20) 100%),
+        linear-gradient(180deg, rgba(6,20,51,.12), rgba(6,20,51,.80));
+    z-index: 0;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
     transform: translateX(-85%);
-    animation: scan 6s infinite;
+    animation: scan 7s infinite;
+    z-index: 0;
 }
 
 @keyframes scan {
@@ -685,75 +705,37 @@ st.markdown(
 .hero-content {
     position: relative;
     z-index: 1;
+    max-width: 680px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 22px;
-}
-
-.brand-left {
-    display: flex;
-    align-items: center;
-    gap: 22px;
-}
-
-.logo-wrap {
-    width: 112px;
-    height: 112px;
-    border-radius: 26px;
-    background: #ffffff;
-    border: 1px solid rgba(34, 43, 91, .12);
-    box-shadow: 0 18px 42px rgba(34,43,91,.10);
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    padding: 10px;
+    min-height: 190px;
 }
 
-.logo-wrap img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-
-.title-wrap h1 {
-    margin: 0;
-    font-size: clamp(2rem, 4vw, 4.2rem);
-    line-height: .94;
-    letter-spacing: -0.065em;
-    color: var(--navy);
-}
-
-.title-wrap h1 span {
-    color: var(--red);
-}
-
-.title-wrap p {
-    margin: 12px 0 0 0;
-    color: var(--muted);
-    font-size: 1rem;
-}
-
-.status-pill {
+.hero-kicker {
     display: inline-flex;
     align-items: center;
+    width: fit-content;
     gap: 8px;
-    padding: 10px 13px;
+    padding: 8px 11px;
     border-radius: 999px;
-    border: 1px solid rgba(227,6,19,.20);
-    background: rgba(227,6,19,.06);
-    color: var(--navy);
-    font-size: .88rem;
-    white-space: nowrap;
-    font-weight: 700;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.10);
+    color: #dbeafe;
+    font-weight: 800;
+    font-size: .78rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    backdrop-filter: blur(12px);
 }
 
-.pulse {
+.hero-kicker span {
     width: 9px;
     height: 9px;
     border-radius: 999px;
     background: var(--red);
-    box-shadow: 0 0 0 0 rgba(227,6,19,.55);
+    box-shadow: 0 0 0 0 rgba(227,6,19,.65);
     animation: pulse 1.8s infinite;
 }
 
@@ -762,20 +744,55 @@ st.markdown(
     100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
 }
 
+.hero h1 {
+    margin: 0;
+    color: var(--white);
+    font-size: clamp(2.25rem, 5vw, 4.7rem);
+    line-height: .92;
+    letter-spacing: -0.065em;
+    text-transform: uppercase;
+}
+
+.hero h1 span {
+    color: #f2f6ff;
+    font-weight: 300;
+    letter-spacing: .01em;
+}
+
+.hero-description {
+    margin: 16px 0 0 0;
+    max-width: 620px;
+    color: #d4def4;
+    font-size: 1rem;
+    line-height: 1.65;
+}
+
+.hero-description strong {
+    color: var(--white);
+}
+
 .glass-card {
     border: 1px solid var(--border);
     border-radius: 24px;
     background: var(--card);
-    box-shadow: 0 18px 55px rgba(34,43,91,.08);
+    box-shadow: 0 20px 60px rgba(0,0,0,.22);
     padding: 18px;
     margin-bottom: 14px;
+    backdrop-filter: blur(18px);
+}
+
+.clean-toolbar {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.6fr) minmax(180px, .7fr) minmax(160px, .55fr);
+    gap: 14px;
+    align-items: end;
 }
 
 .panel-title {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--navy);
+    color: #eef5ff;
     font-weight: 900;
     letter-spacing: .08em;
     font-size: .82rem;
@@ -788,58 +805,61 @@ st.markdown(
     height: 9px;
     border-radius: 50%;
     background: var(--red);
-    box-shadow: 0 0 14px rgba(227,6,19,.42);
+    box-shadow: 0 0 14px rgba(227,6,19,.7);
 }
 
 .stTextArea textarea, .stTextInput input {
-    background: #ffffff !important;
-    color: var(--navy) !important;
-    border: 1px solid rgba(34, 43, 91, 0.16) !important;
+    background: var(--field) !important;
+    color: #f8fbff !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
     border-radius: 18px !important;
-    box-shadow: inset 0 0 0 1px rgba(34,43,91,.02) !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02) !important;
+}
+
+.stTextInput input::placeholder, .stTextArea textarea::placeholder {
+    color: rgba(233, 240, 255, .48) !important;
 }
 
 .stSelectbox div[data-baseweb="select"] > div {
-    background: #ffffff !important;
-    border-color: rgba(34, 43, 91, 0.16) !important;
+    background: var(--field) !important;
+    border-color: rgba(255,255,255,0.16) !important;
     border-radius: 16px !important;
-    color: var(--navy) !important;
+    color: #f8fbff !important;
 }
 
 .stButton > button {
     width: 100%;
-    border: 1px solid rgba(227,6,19,.18);
+    border: 1px solid rgba(255,255,255,.14);
     border-radius: 18px;
     padding: .75rem 1rem;
     color: #ffffff;
     font-weight: 900;
-    background: linear-gradient(90deg, var(--red), var(--red2));
-    box-shadow: 0 12px 30px rgba(227,6,19,.16);
+    background: linear-gradient(90deg, var(--red), #ff4050);
+    box-shadow: 0 12px 30px rgba(227,6,19,.20);
     transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
 }
 
 .stButton > button:hover {
     transform: translateY(-1px);
-    filter: brightness(1.04);
-    box-shadow: 0 18px 44px rgba(227,6,19,.22);
+    filter: brightness(1.05);
+    box-shadow: 0 18px 44px rgba(227,6,19,.26);
     color: #ffffff;
 }
 
 .result-card {
-    border: 1px solid rgba(34,43,91,0.14);
+    border: 1px solid rgba(255,255,255,0.13);
     border-radius: 26px;
     padding: 18px;
-    background: #ffffff;
+    background: rgba(5, 18, 47, .68);
     min-height: 500px;
-    box-shadow: inset 0 0 0 1px rgba(34,43,91,.02);
 }
 
 .section {
-    border: 1px solid rgba(34,43,91,0.12);
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 20px;
     padding: 14px 16px;
     margin: 0 0 12px 0;
-    background: linear-gradient(135deg, #ffffff, #fafbff);
+    background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
 }
 
 .section h3 {
@@ -849,28 +869,28 @@ st.markdown(
     letter-spacing: .10em;
 }
 
-.req h3 { color: var(--red); }
-.personal h3 { color: var(--navy); }
-.medical h3 { color: var(--orange); }
-.medallergy h3 { color: #6d28d9; }
+.req h3 { color: #ff8a93; }
+.personal h3 { color: #93c5fd; }
+.medical h3 { color: #fdba74; }
+.medallergy h3 { color: #c4b5fd; }
 
 .grid-row {
     display: grid;
     grid-template-columns: minmax(130px, 210px) 1fr;
     gap: 12px;
     padding: 8px 0;
-    border-top: 1px solid rgba(34,43,91,0.10);
+    border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .grid-row:first-of-type { border-top: none; }
 
 .label {
-    color: #68708c;
+    color: #9fb0d0;
     font-size: .90rem;
 }
 
 .value {
-    color: var(--navy);
+    color: #f8fbff;
     font-weight: 700;
     word-break: break-word;
 }
@@ -884,14 +904,14 @@ st.markdown(
 
 .metric-card {
     padding: 12px;
-    border: 1px solid rgba(34,43,91,0.12);
+    border: 1px solid rgba(255,255,255,0.10);
     border-radius: 18px;
-    background: linear-gradient(180deg, #ffffff, #f8f9ff);
+    background: rgba(255,255,255,.06);
 }
 
 .metric-card span {
     display: block;
-    color: #747b95;
+    color: #9fb0d0;
     font-size: .72rem;
     text-transform: uppercase;
     letter-spacing: .08em;
@@ -899,26 +919,27 @@ st.markdown(
 
 .metric-card strong {
     display: block;
-    color: var(--navy);
+    color: #ffffff;
     font-size: 1.1rem;
     margin-top: 4px;
 }
 
 .info-note {
-    color: #68708c;
+    color: #b9c6df;
     font-size: .86rem;
     padding: 10px 12px;
-    border: 1px solid rgba(34,43,91,.12);
+    border: 1px solid rgba(255,255,255,.10);
     border-radius: 16px;
-    background: #ffffff;
+    background: rgba(255,255,255,.06);
 }
 
-hr { border-color: rgba(34,43,91,0.10); }
+hr { border-color: rgba(255,255,255,0.10); }
 
-@media (max-width: 800px) {
-    .hero-content, .brand-left { flex-direction: column; align-items: flex-start; }
+@media (max-width: 900px) {
+    .clean-toolbar { grid-template-columns: 1fr; }
     .metric-strip { grid-template-columns: repeat(2, 1fr); }
-    .logo-wrap { width: 90px; height: 90px; }
+    .hero { min-height: 320px; background-position: center; }
+    .hero::before { background: rgba(6,20,51,.84); }
 }
 </style>
 """,
@@ -929,20 +950,28 @@ hr { border-color: rgba(34,43,91,0.10); }
 # UI HELPERS
 # ─────────────────────────────────────────────
 
+def image_to_data_uri(path: str) -> str:
+    file_path = Path(path)
+    if not file_path.exists():
+        return ""
+    mime = "image/png" if file_path.suffix.lower() == ".png" else "image/jpeg"
+    encoded = base64.b64encode(file_path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{encoded}"
+
+
 def render_hero():
     translator_status = "Online translation ready" if GoogleTranslator else "Offline fallback mode"
+    bg_uri = image_to_data_uri("logo.png") or image_to_data_uri("app/static/logo.png")
+    bg_style = f' style="background-image: url({bg_uri});"' if bg_uri else ""
     st.markdown(
         f"""
-<div class="hero">
+<div class="hero"{bg_style}>
   <div class="hero-content">
-    <div class="brand-left">
-      <div class="logo-wrap"><img src="app/static/logo.png" alt="Erdem Hospital logo"></div>
-      <div class="title-wrap">
-        <h1>Clinical Intake<br/><span>Formatter</span></h1>
-        <p>Erdem Hospital multilingual patient intake formatter — clean, structured, copy-ready.</p>
-      </div>
-    </div>
-    <div class="status-pill"><span class="pulse"></span>{translator_status}</div>
+    <div class="hero-kicker"><span></span>{translator_status}</div>
+    <h1>Clinical Intake<br/><span>Formatter</span></h1>
+    <p class="hero-description">
+      A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured message for doctors in <strong>English</strong> or <strong>Turkish</strong>.
+    </p>
   </div>
 </div>
 """,
@@ -1067,16 +1096,15 @@ if "generated_data" not in st.session_state:
 if "plain_message" not in st.session_state:
     st.session_state.plain_message = ""
 
-with st.container():
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-    top_a, top_b, top_c = st.columns([2.2, 1, 1])
-    with top_a:
-        requirement = st.text_input("Patient wants", placeholder="breast lift, rhinoplasty, lipoabdominoplasty…")
-    with top_b:
-        patient_language = st.selectbox("Patient language", PATIENT_LANGUAGES, index=0)
-    with top_c:
-        doctor_language = st.selectbox("Doctor message", DOCTOR_MESSAGE_LANGUAGES, index=0)
-    st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+top_a, top_b, top_c = st.columns([2.2, 1, 1])
+with top_a:
+    requirement = st.text_input("Patient wants", placeholder="breast lift, rhinoplasty, lipoabdominoplasty…")
+with top_b:
+    patient_language = st.selectbox("Patient language", PATIENT_LANGUAGES, index=0)
+with top_c:
+    doctor_language = st.selectbox("Doctor message", DOCTOR_MESSAGE_LANGUAGES, index=0)
+st.markdown('</div>', unsafe_allow_html=True)
 
 left, right = st.columns([1, 1], gap="large")
 
