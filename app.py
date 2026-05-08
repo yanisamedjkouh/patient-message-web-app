@@ -18,7 +18,7 @@ except ImportError:
 
 st.set_page_config(
     page_title="Patient Message Formatter",
-    page_icon="🥼",
+    page_icon="🏥",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -52,7 +52,11 @@ LANGUAGE_CODES = {
 }
 
 QUESTION_HEADERS = [
-    "personal information", "medical history", "medications and allergies", "patient requirements",
+    "personal", "personal information", "patient information",
+    "medical", "medical history",
+    "medications", "allergies", "medications allergies", "medications and allergies",
+    "patient requirements", "requirements",
+
     "informations personnelles", "antécédents médicaux", "médicaments et allergies", "exigences du patient",
     "informatii personale", "informații personale", "istoric medical", "medicamente si alergii", "medicamente și alergii",
     "información personal", "historial médico", "medicamentos y alergias", "requisitos del paciente",
@@ -66,6 +70,7 @@ QUESTION_KEYWORDS = [
     "full name", "age", "height", "weight", "bmi", "chronic", "disease", "infectious", "infection",
     "surgeries", "surgery", "medications", "medication", "allergies", "allergy", "smoke", "alcohol",
     "patient wants", "patient requirements", "requirements", "procedure", "treatment",
+
     "nom", "âge", "taille", "poids", "maladie", "infection", "chirurgie", "opération", "médicament", "allergie", "fume", "alcool",
     "nume", "vârstă", "varsta", "înălțime", "inaltime", "greutate", "boală", "boala", "infecție", "infectie", "operație", "operatie", "medicamente", "alergie", "fumez", "alcool",
     "nombre", "edad", "altura", "peso", "enfermedad", "infección", "infeccion", "cirugía", "cirugia", "medicamento", "alergia", "fumar", "alcohol",
@@ -76,14 +81,52 @@ QUESTION_KEYWORDS = [
 ]
 
 NONE_PHRASES = {
-    "English": ["no", "none", "nothing", "nope", "nil", "negative", "i don't", "i dont", "do not", "don't", "dont", "no any", "not have", "no disease", "no diseases", "no infection", "no infections", "no allergy", "no allergies", "no medication", "no medications", "i don't have", "i dont have", "i don't take", "i dont take"],
-    "Dutch": ["nee", "geen", "niets", "niks", "niet", "ik heb geen", "ik gebruik geen", "ik neem geen", "geen ziekten", "geen infecties", "geen allergieën", "geen medicijnen", "geen medicatie"],
-    "French": ["non", "aucun", "aucune", "rien", "pas", "je n'ai pas", "je nai pas", "je ne prends pas", "pas de maladie", "pas d'infection", "pas dinfection", "pas d'allergie", "pas dallergie", "pas de médicaments", "pas de medicaments"],
-    "Romanian": ["nu", "niciuna", "niciun", "nimic", "nu am", "nu iau", "fără", "fara", "nu am boli", "nu am infecții", "nu am infectii", "nu am alergii"],
-    "Spanish": ["no", "ninguno", "ninguna", "nada", "no tengo", "no tomo", "sin", "no enfermedades", "no infecciones", "no alergias", "no medicamentos"],
-    "Italian": ["no", "nessuno", "nessuna", "niente", "non ho", "non prendo", "senza", "nessuna malattia", "nessuna infezione", "nessuna allergia", "nessun farmaco"],
-    "German": ["nein", "keine", "keiner", "nichts", "ich habe keine", "ich nehme keine", "keine krankheiten", "keine infektionen", "keine allergien", "keine medikamente"],
-    "Turkish": ["hayır", "hayir", "yok", "hiç", "hic", "yoktur", "kullanmıyorum", "kullanmiyorum", "almıyorum", "almiyorum", "hastalığım yok", "hastalik yok", "enfeksiyon yok", "alerji yok", "ilaç kullanmıyorum", "ilac kullanmiyorum"],
+    "English": [
+        "no", "none", "nothing", "nope", "nil", "negative",
+        "i don't", "i dont", "do not", "don't", "dont",
+        "no any", "not have", "no disease", "no diseases",
+        "no infection", "no infections", "no allergy", "no allergies",
+        "no medication", "no medications", "i don't have", "i dont have",
+        "i don't take", "i dont take", "not taking",
+    ],
+    "Dutch": [
+        "nee", "geen", "niets", "niks", "niet", "ik heb geen",
+        "ik gebruik geen", "ik neem geen", "geen ziekten", "geen infecties",
+        "geen allergieën", "geen allergieen", "geen medicijnen", "geen medicatie",
+    ],
+    "French": [
+        "non", "aucun", "aucune", "rien", "pas", "je n'ai pas",
+        "je nai pas", "je ne prends pas", "pas de maladie", "pas d'infection",
+        "pas dinfection", "pas d'allergie", "pas dallergie",
+        "pas de médicaments", "pas de medicaments",
+    ],
+    "Romanian": [
+        "nu", "niciuna", "niciun", "nimic", "nu am", "nu iau",
+        "fără", "fara", "nu am boli", "nu am infecții",
+        "nu am infectii", "nu am alergii",
+    ],
+    "Spanish": [
+        "no", "ninguno", "ninguna", "nada", "no tengo",
+        "no tomo", "sin", "no enfermedades", "no infecciones",
+        "no alergias", "no medicamentos",
+    ],
+    "Italian": [
+        "no", "nessuno", "nessuna", "niente", "non ho",
+        "non prendo", "senza", "nessuna malattia", "nessuna infezione",
+        "nessuna allergia", "nessun farmaco",
+    ],
+    "German": [
+        "nein", "keine", "keiner", "nichts", "ich habe keine",
+        "ich nehme keine", "keine krankheiten", "keine infektionen",
+        "keine allergien", "keine medikamente",
+    ],
+    "Turkish": [
+        "hayır", "hayir", "yok", "hiç", "hic", "yoktur",
+        "kullanmıyorum", "kullanmiyorum", "almıyorum", "almiyorum",
+        "hastalığım yok", "hastaligim yok", "hastalik yok",
+        "enfeksiyon yok", "alerji yok", "ilaç kullanmıyorum",
+        "ilac kullanmiyorum",
+    ],
 }
 
 YES_SURGERY_PHRASES = {
@@ -120,14 +163,17 @@ ALCOHOL_WORDS = {
 }
 
 OCCASIONAL_WORDS = {
-    "English": ["sometimes", "occasionally", "social", "socially", "rarely"],
-    "Dutch": ["soms", "af en toe", "zelden", "occasioneel", "sociaal"],
-    "French": ["parfois", "occasionnellement", "socialement", "rarement", "de temps en temps"],
-    "Romanian": ["uneori", "ocazional", "social", "rar"],
-    "Spanish": ["a veces", "ocasionalmente", "socialmente", "rara vez"],
-    "Italian": ["a volte", "occasionalmente", "socialmente", "raramente"],
-    "German": ["manchmal", "gelegentlich", "sozial", "selten"],
-    "Turkish": ["bazen", "ara sıra", "ara sira", "nadiren", "sosyal olarak"],
+    "English": [
+        "sometimes", "occasionally", "social", "socially", "rarely",
+        "a little", "little bit", "just a little", "from time to time",
+    ],
+    "Dutch": ["soms", "af en toe", "zelden", "occasioneel", "sociaal", "een beetje"],
+    "French": ["parfois", "occasionnellement", "socialement", "rarement", "de temps en temps", "un peu"],
+    "Romanian": ["uneori", "ocazional", "social", "rar", "puțin", "putin"],
+    "Spanish": ["a veces", "ocasionalmente", "socialmente", "rara vez", "un poco"],
+    "Italian": ["a volte", "occasionalmente", "socialmente", "raramente", "un po"],
+    "German": ["manchmal", "gelegentlich", "sozial", "selten", "ein bisschen"],
+    "Turkish": ["bazen", "ara sıra", "ara sira", "nadiren", "sosyal olarak", "az", "biraz"],
 }
 
 LABELS = {
@@ -144,7 +190,7 @@ LABELS = {
         "chronic": "Chronic diseases",
         "infectious": "Infectious diseases",
         "surgery": "Previous surgeries",
-        "med_allergy": "MEDICATIONS and ALLERGIES",
+        "med_allergy": "MEDICATIONS & ALLERGIES",
         "medication": "Medications",
         "allergy": "Allergies",
         "smoke_alcohol": "Smoke / Alcohol",
@@ -195,12 +241,47 @@ def words_for(language, dictionary):
 
 
 def clean_line(line):
-    return re.sub(r"\s+", " ", str(line).strip())
+    line = str(line)
+    # Remove hidden WhatsApp / copied text characters.
+    line = line.replace(chr(8288), "").replace(chr(65279), "").replace(chr(8203), "")
+    line = line.replace("⁠", "").replace("﻿", "")
+    return re.sub(r"\s+", " ", line.strip())
+
+
+def strip_answer_numbering(line):
+    """
+    Supports:
+    1 Erald Legisi
+    2 26
+    3 183
+    4 80kg
+    1. No
+    2) No
+
+    Avoids breaking height formats like: 1 m 76 cm.
+    """
+    line = clean_line(line)
+
+    # Clear list markers: 1. / 1) / 1-
+    line = re.sub(r"^\s*\d{1,2}\s*[\.)\-]\s*", "", line).strip()
+
+    # Bare list numbering: 1 Name / 2 26 / 3 183 / 4 80kg
+    match = re.match(r"^(\d{1,2})\s+(.+)$", line)
+    if match:
+        number = int(match.group(1))
+        rest = match.group(2).strip()
+        # Do not turn "1 m 76 cm" into "m 76 cm".
+        if 1 <= number <= 10 and not re.match(r"^(m|meter|meters|metre|metri|metro|metros)\b", rest.lower()):
+            return rest
+
+    return line
 
 
 def normalize_text(text):
     text = str(text).replace("\r", "\n")
     text = text.replace("\u2019", "'").replace("\u2018", "'").replace("`", "'")
+    # Common typo from some patients: 176 sm / 1 m 76 sm -> cm.
+    # This does not touch "smoke".
     text = re.sub(r"(?<=\d)\s*sm\b", " cm", text, flags=re.IGNORECASE)
     return text.strip()
 
@@ -210,29 +291,38 @@ def get_answer_lines(text):
     raw_lines = [clean_line(line) for line in text.split("\n")]
     lines = []
 
-    for line in raw_lines:
+    for raw_line in raw_lines:
+        if not raw_line:
+            continue
+
+        line = strip_answer_numbering(raw_line)
         if not line:
             continue
 
         lower = line.lower().strip()
+        header_key = lower.strip("*:：- ")
 
-        if lower.strip("*: ") in QUESTION_HEADERS:
+        # Remove section headers like Medical / Medications Allergies.
+        if header_key in QUESTION_HEADERS:
             continue
 
-        if re.match(r"^\d+\s*[\.)-]\s*", lower):
-            after = re.sub(r"^\d+\s*[\.)-]\s*", "", lower).strip()
-            if any(keyword in after for keyword in QUESTION_KEYWORDS) and after.endswith(":"):
-                continue
-
+        # Remove explanatory lines from pasted questionnaires.
         if lower.startswith("(") and lower.endswith(")"):
             continue
 
+        # If "Full Name: Erald Legisi", keep only the answer.
         if ":" in line:
             before, after = line.split(":", 1)
             if any(keyword in before.lower() for keyword in QUESTION_KEYWORDS):
                 line = clean_line(after)
                 if not line:
                     continue
+
+        lowered = line.lower().strip()
+
+        # Skip lines that are clearly copied question labels.
+        if any(keyword in lowered for keyword in QUESTION_KEYWORDS) and (lowered.endswith(":") or "?" in lowered):
+            continue
 
         lines.append(line)
 
@@ -270,17 +360,44 @@ def remove_requirement_lines(lines):
 
 
 def extract_name(lines):
-    skip = QUESTION_KEYWORDS + [
-        "yes", "no", "none", "sometimes", "occasionally", "cm", "kg", "years", "old", "yo",
-        "oui", "non", "aucun", "aucune", "parfois", "da", "nu", "sí", "si", "sì", "ja", "nein",
-        "hayır", "hayir", "yok", "evet", "nee", "geen",
-    ]
+    """
+    The name is usually the first personal-information answer.
+    We avoid substring checks like "si" or "ja" because names can contain them.
+    """
+    exact_non_names = {
+        "yes", "no", "none", "sometimes", "occasionally", "rarely",
+        "oui", "non", "aucun", "aucune", "parfois",
+        "da", "nu", "niciun", "niciuna",
+        "sí", "si", "ninguno", "ninguna",
+        "sì", "nessuno", "nessuna",
+        "ja", "nein", "keine", "geen", "nee",
+        "hayır", "hayir", "yok", "evet",
+    }
 
     for line in lines:
-        lower = line.lower()
-        if re.search(r"[a-zA-ZÀ-ÿ]", line):
-            if not any(word in lower for word in skip):
-                return line
+        candidate = strip_answer_numbering(line)
+        lower = candidate.lower().strip()
+
+        if not candidate:
+            continue
+
+        if lower in QUESTION_HEADERS:
+            continue
+
+        if lower in exact_non_names:
+            continue
+
+        # Skip pure numbers or measurements.
+        if re.fullmatch(r"\d{1,3}\s*(cm|kg|kgs|kilo|years?|yo|jaar|ans|anni|jahre|yaş|yas)?", lower):
+            continue
+
+        # Skip question labels only when they look like labels/questions.
+        if any(keyword in lower for keyword in QUESTION_KEYWORDS) and (":" in lower or "?" in lower):
+            continue
+
+        if re.search(r"[a-zA-ZÀ-ÿ]", candidate):
+            return candidate
+
     return lines[0] if lines else ""
 
 
@@ -402,10 +519,6 @@ def online_translate_text(text, patient_language, doctor_language):
 
 
 def translate_patient_detail(answer, patient_language, doctor_language):
-    """
-    Translate the patient's actual free-text answer using online Google Translate.
-    We keep only the basic None/Yes/Occasional detection separately for cleaner medical formatting.
-    """
     answer = clean_line(answer)
     if not answer:
         return ""
@@ -421,6 +534,7 @@ def normalize_answer(answer, patient_language, doctor_language):
         return translate_basic_answer("__NONE__", doctor_language)
 
     if any(phrase in lower for phrase in none_phrases):
+        # Do not erase useful mixed answers like "no allergy but I smoke".
         if not any(word in lower for word in ["but", "except", "only", "smoke", "alcohol", "drink", "mais", "sauf", "pero", "ma", "ama", "maar", "behalve"]):
             return translate_basic_answer("__NONE__", doctor_language)
 
@@ -439,6 +553,7 @@ def normalize_surgery(answer, patient_language, doctor_language):
         simple_yes = ["yes", "oui", "da", "sí", "si", "sì", "ja", "evet"]
         if lower in simple_yes:
             return LABELS[doctor_language]["yes_star"]
+
         translated = online_translate_text(answer, patient_language, doctor_language)
         return translated + " *" if "*" not in translated else translated
 
@@ -486,12 +601,14 @@ def get_order_based_answers(lines):
     remaining = [line for line in lines if line != name]
     personal_numbers, rest = [], []
 
+    # First collect age, height, weight from the top of the remaining answers.
     for line in remaining:
         if len(personal_numbers) < 3 and re.search(r"\d", line):
             personal_numbers.append(line)
         else:
             rest.append(line)
 
+    # Fallback for very compact formats.
     if len(personal_numbers) < 3:
         personal_numbers, rest = remaining[:3], remaining[3:]
 
@@ -521,6 +638,7 @@ def format_patient_message(patient_text, requirement_text="", patient_language="
 
     detected_requirement = extract_patient_requirement_from_text(lines)
     lines = remove_requirement_lines(lines)
+
     requirement = clean_requirement(requirement_text) or detected_requirement
     requirement = online_translate_text(requirement, patient_language, doctor_language) if requirement else ""
 
@@ -603,18 +721,10 @@ st.markdown(
     --navy-800: #122657;
     --navy-700: #1f3265;
     --red: #e30613;
-    --red-soft: rgba(227, 6, 19, .12);
     --white: #ffffff;
-    --soft: #eaf0fb;
-    --muted: #a9b7d4;
-    --muted-2: #61708f;
     --border: rgba(255,255,255,.13);
     --card: rgba(6, 20, 51, .72);
-    --card-solid: #0b1b42;
     --field: rgba(255,255,255,.08);
-    --green: #22c55e;
-    --orange: #fb923c;
-    --violet: #a78bfa;
 }
 
 .stApp {
@@ -634,23 +744,13 @@ st.markdown(
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stToolbar"] { display: none; }
 
-.hero {
+.hero,
+.hero::before,
+.hero::after,
+.hero-content,
+.hero-bg-img {
     display: none;
 }
-
-.hero::before { display: none; }
-
-.hero::after { display: none; }
-
-@keyframes scan {
-    0% { transform: translateX(-85%); }
-    55% { transform: translateX(85%); }
-    100% { transform: translateX(85%); }
-}
-
-.hero-content { display: none; }
-
-.hero-bg-img { display: none; }
 
 .hero-kicker {
     display: inline-flex;
@@ -683,11 +783,6 @@ st.markdown(
     70% { box-shadow: 0 0 0 9px rgba(227,6,19,0); }
     100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
 }
-
-.hero h1 { display: none; }
-.hero h1 span { display: none; }
-.hero-description { display: none; }
-.hero-description strong { display: none; }
 
 .app-title-card {
     position: relative;
@@ -780,23 +875,6 @@ st.markdown(
     min-width: 0;
 }
 
-.glass-card {
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    background: var(--card);
-    box-shadow: 0 20px 60px rgba(0,0,0,.22);
-    padding: 18px;
-    margin-bottom: 14px;
-    backdrop-filter: blur(18px);
-}
-
-.clean-toolbar {
-    display: grid;
-    grid-template-columns: minmax(240px, 1.6fr) minmax(180px, .7fr) minmax(160px, .55fr);
-    gap: 14px;
-    align-items: end;
-}
-
 .panel-title {
     display: flex;
     align-items: center;
@@ -863,76 +941,6 @@ st.markdown(
     min-height: 0;
 }
 
-.section {
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 20px;
-    padding: 14px 16px;
-    margin: 0 0 12px 0;
-    background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
-}
-
-.section h3 {
-    margin: 0 0 12px 0;
-    font-size: .82rem;
-    text-transform: uppercase;
-    letter-spacing: .10em;
-}
-
-.req h3 { color: #ff8a93; }
-.personal h3 { color: #93c5fd; }
-.medical h3 { color: #fdba74; }
-.medallergy h3 { color: #c4b5fd; }
-
-.grid-row {
-    display: grid;
-    grid-template-columns: minmax(130px, 210px) 1fr;
-    gap: 12px;
-    padding: 8px 0;
-    border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.grid-row:first-of-type { border-top: none; }
-
-.label {
-    color: #9fb0d0;
-    font-size: .90rem;
-}
-
-.value {
-    color: #f8fbff;
-    font-weight: 700;
-    word-break: break-word;
-}
-
-.metric-strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.metric-card {
-    padding: 12px;
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 18px;
-    background: rgba(255,255,255,.06);
-}
-
-.metric-card span {
-    display: block;
-    color: #9fb0d0;
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-}
-
-.metric-card strong {
-    display: block;
-    color: #ffffff;
-    font-size: 1.1rem;
-    margin-top: 4px;
-}
-
 .info-note {
     color: #b9c6df;
     font-size: .86rem;
@@ -942,11 +950,7 @@ st.markdown(
     background: rgba(255,255,255,.06);
 }
 
-hr { border-color: rgba(255,255,255,0.10); }
-
 @media (max-width: 900px) {
-    .clean-toolbar { grid-template-columns: 1fr; }
-    .metric-strip { grid-template-columns: repeat(2, 1fr); }
     .app-title-card { flex-direction: column; align-items: flex-start; }
     .app-title-text { align-items: flex-start; }
     .header-logo { width: 64px; height: 64px; border-radius: 16px; }
@@ -1014,14 +1018,6 @@ def render_hero():
 """,
         unsafe_allow_html=True,
     )
-
-
-def render_section(title, css_class, rows):
-    html = f'<div class="section {css_class}"><h3>{escape(title)}</h3>'
-    for label, value in rows:
-        html += f'<div class="grid-row"><div class="label">{escape(str(label))}</div><div class="value">{escape(str(value))}</div></div>'
-    html += "</div>"
-    return html
 
 
 def render_result(data):
@@ -1128,7 +1124,7 @@ with left:
     st.markdown(
         """
 <div class="info-note">
-The app follows the order: name, age, height, weight, chronic diseases, infections, surgeries, medications, allergies, smoke/alcohol.
+The app follows the order: name, age, height, weight, chronic diseases, infections, surgeries, medications, allergies, smoke/alcohol. It also supports numbered answers and section headers like Medical or Medications Allergies.
 </div>
 """,
         unsafe_allow_html=True,
@@ -1144,7 +1140,6 @@ with right:
 
     if generate:
         # Always clear the previous output first, then generate the new result.
-        # This prevents old patient details from staying visible if the new input is empty or invalid.
         st.session_state.generated_data = None
         st.session_state.plain_message = ""
 
@@ -1157,7 +1152,6 @@ with right:
 
     if st.session_state.plain_message:
         copy_button_component(st.session_state.plain_message)
-
 
 st.markdown(
     """
