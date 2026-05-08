@@ -18,7 +18,7 @@ except ImportError:
 
 st.set_page_config(
     page_title="Patient Message Formatter",
-    page_icon="🏥",
+    page_icon="🥼",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -208,7 +208,7 @@ LABELS = {
         "chronic": "Chronic diseases",
         "infectious": "Infectious diseases",
         "surgery": "Previous surgeries",
-        "med_allergy": "MEDICATIONS & ALLERGIES",
+        "med_allergy": "MEDICATIONS AND ALLERGIES",
         "medication": "Medications",
         "allergy": "Allergies",
         "smoke_alcohol": "Smoke / Alcohol",
