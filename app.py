@@ -663,36 +663,12 @@ st.markdown(
 [data-testid="stToolbar"] { display: none; }
 
 .hero {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    min-height: 0;
-    border: 1px solid var(--border);
-    border-radius: 32px;
-    padding: 0;
-    background: var(--navy-900);
-    box-shadow: 0 28px 90px rgba(0, 0, 0, .34);
-    margin-bottom: 14px;
+    display: none;
 }
 
-.hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(6,20,51,.72) 0%, rgba(6,20,51,.30) 42%, rgba(6,20,51,.05) 100%);
-    z-index: 1;
-}
+.hero::before { display: none; }
 
-.hero::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
-    transform: translateX(-85%);
-    animation: scan 7s infinite;
-    z-index: 0;
-}
+.hero::after { display: none; }
 
 @keyframes scan {
     0% { transform: translateX(-85%); }
@@ -700,19 +676,9 @@ st.markdown(
     100% { transform: translateX(85%); }
 }
 
-.hero-content {
-    display: none;
-}
+.hero-content { display: none; }
 
-.hero-bg-img {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center center;
-}
+.hero-bg-img { display: none; }
 
 .hero-kicker {
     display: inline-flex;
@@ -755,10 +721,10 @@ st.markdown(
     width: 100%;
     box-sizing: border-box;
     border: 1px solid var(--border);
-    border-radius: 32px;
-    background: rgba(6, 20, 51, .72);
+    border-radius: 30px;
+    background: rgba(6, 20, 51, .78);
     box-shadow: 0 20px 60px rgba(0,0,0,.22);
-    padding: 20px 24px;
+    padding: 18px 22px;
     margin-bottom: 14px;
     backdrop-filter: blur(18px);
     display: flex;
@@ -785,6 +751,35 @@ st.markdown(
 }
 
 .app-title-text {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-logo {
+    width: 78px;
+    height: 78px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(255,255,255,.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+    box-shadow: 0 14px 34px rgba(0,0,0,.18);
+}
+
+.header-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.header-copy {
     min-width: 0;
 }
 
@@ -865,10 +860,10 @@ st.markdown(
 
 .result-card {
     border: 1px solid rgba(255,255,255,0.13);
-    border-radius: 26px;
-    padding: 18px;
-    background: rgba(5, 18, 47, .68);
-    min-height: 500px;
+    border-radius: 22px;
+    padding: 0;
+    background: transparent;
+    min-height: 0;
 }
 
 .section {
@@ -955,10 +950,9 @@ hr { border-color: rgba(255,255,255,0.10); }
 @media (max-width: 900px) {
     .clean-toolbar { grid-template-columns: 1fr; }
     .metric-strip { grid-template-columns: repeat(2, 1fr); }
-    .hero { aspect-ratio: 16 / 9; }
-    .hero::before { background: rgba(6,20,51,.18); }
-    .hero-bg-img { object-position: center center; }
     .app-title-card { flex-direction: column; align-items: flex-start; }
+    .app-title-text { align-items: flex-start; }
+    .header-logo { width: 64px; height: 64px; border-radius: 16px; }
 }
 </style>
 """,
@@ -1005,18 +999,18 @@ def find_logo_data_uri() -> str:
 
 def render_hero():
     translator_status = "Online translation ready" if GoogleTranslator else "Offline fallback mode"
-    bg_uri = find_logo_data_uri()
-    img_html = f'<img class="hero-bg-img" src="{bg_uri}" alt="Erdem Hospital">' if bg_uri else ""
+    logo_uri = find_logo_data_uri()
+    logo_html = f'<div class="header-logo"><img src="{logo_uri}" alt="Hospital logo"></div>' if logo_uri else '<div class="header-logo"></div>'
 
     st.markdown(
         f"""
-<div class="hero">
-  {img_html}
-</div>
 <div class="app-title-card">
   <div class="app-title-text">
-    <h1>Clinical Intake Formatter</h1>
-    <p>A streamlined Erdem Hospital tool for converting multilingual patient intake answers into a clear, structured doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
+    {logo_html}
+    <div class="header-copy">
+      <h1>Clinical Intake Formatter</h1>
+      <p>A simple tool for turning multilingual patient answers into a clean doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
+    </div>
   </div>
   <div class="hero-kicker"><span></span>{translator_status}</div>
 </div>
@@ -1038,56 +1032,21 @@ def render_result(data):
         st.markdown(
             """
 <div class="result-card">
-  <div class="info-note">Your formatted doctor message will appear here after you click <b>Generate message</b>.</div>
+  <div class="info-note">Your doctor message will appear here after you click <b>Generate message</b>.</div>
 </div>
 """,
             unsafe_allow_html=True,
         )
         return
 
-    metric_html = f"""
-<div class="metric-strip">
-  <div class="metric-card"><span>Name</span><strong>{escape(data['full_name_value'])}</strong></div>
-  <div class="metric-card"><span>Age</span><strong>{escape(data['age_value'])}</strong></div>
-  <div class="metric-card"><span>BMI</span><strong>{escape(data['bmi_value'])}</strong></div>
-  <div class="metric-card"><span>Procedure</span><strong>{escape(data['requirement'])}</strong></div>
-</div>
-"""
-
-    html = '<div class="result-card">'
-    html += metric_html
-    html += render_section(data["requirements"], "req", [(data["patient_wants"], data["requirement"])])
-    html += render_section(
-        data["personal"],
-        "personal",
-        [
-            (data["full_name"], data["full_name_value"]),
-            (data["age"], data["age_value"]),
-            (data["height"], data["height_value"]),
-            (data["weight"], data["weight_value"]),
-            (data["bmi"], data["bmi_value"]),
-        ],
+    plain_text = data_to_plain_text(data)
+    st.text_area(
+        "Doctor message",
+        value=plain_text,
+        height=520,
+        label_visibility="collapsed",
+        key="doctor_message_text_area",
     )
-    html += render_section(
-        data["medical"],
-        "medical",
-        [
-            (data["chronic"], data["chronic_value"]),
-            (data["infectious"], data["infection_value"]),
-            (data["surgery"], data["surgery_value"]),
-        ],
-    )
-    html += render_section(
-        data["med_allergy"],
-        "medallergy",
-        [
-            (data["medication"], data["medication_value"]),
-            (data["allergy"], data["allergy_value"]),
-            (data["smoke_alcohol"], data["smoke_value"]),
-        ],
-    )
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
 
 
 def copy_button_component(text):
@@ -1198,8 +1157,6 @@ with right:
 
     if st.session_state.plain_message:
         copy_button_component(st.session_state.plain_message)
-        with st.expander("Show plain copy text"):
-            st.text_area("Plain message", value=st.session_state.plain_message, height=280, label_visibility="collapsed")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
