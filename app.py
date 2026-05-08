@@ -718,6 +718,8 @@ st.markdown(
 .hero-description strong { display: none; }
 
 .app-title-card {
+    position: relative;
+    overflow: hidden;
     width: 100%;
     box-sizing: border-box;
     border: 1px solid var(--border);
@@ -731,6 +733,29 @@ st.markdown(
     align-items: center;
     justify-content: space-between;
     gap: 22px;
+}
+
+.app-title-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.13), transparent);
+    transform: translateX(-100%);
+    animation: headerFadeScan 5.8s infinite;
+    pointer-events: none;
+}
+
+@keyframes headerFadeScan {
+    0% { transform: translateX(-100%); opacity: 0; }
+    15% { opacity: 1; }
+    55% { transform: translateX(100%); opacity: 1; }
+    70% { opacity: 0; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+.app-title-card > * {
+    position: relative;
+    z-index: 1;
 }
 
 .app-title-card h1 {
@@ -1148,10 +1173,15 @@ with right:
         st.rerun()
 
     if generate:
+        # Always clear the previous output first, then generate the new result.
+        # This prevents old patient details from staying visible if the new input is empty or invalid.
+        st.session_state.generated_data = None
+        st.session_state.plain_message = ""
+
         with st.spinner("Formatting and translating…"):
             data = format_patient_message(patient_text, requirement, patient_language, doctor_language)
             st.session_state.generated_data = data
-            st.session_state.plain_message = data_to_plain_text(data)
+            st.session_state.plain_message = data_to_plain_text(data) if data else ""
 
     render_result(st.session_state.generated_data)
 
