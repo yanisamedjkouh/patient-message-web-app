@@ -402,43 +402,13 @@ def online_translate_text(text, patient_language, doctor_language):
 
 
 def translate_patient_detail(answer, patient_language, doctor_language):
+    """
+    Translate the patient's actual free-text answer using online Google Translate.
+    We keep only the basic None/Yes/Occasional detection separately for cleaner medical formatting.
+    """
     answer = clean_line(answer)
-    lower = answer.lower().strip()
-
-    if not answer or patient_language == doctor_language:
-        return answer
-
-    to_english = {
-        "diabète": "diabetes", "diabete": "diabetes", "diabetes": "diabetes", "diabet": "diabetes", "şeker": "diabetes", "seker": "diabetes", "suiker": "diabetes", "suikerziekte": "diabetes",
-        "hypertension": "hypertension", "hipertensiune": "hypertension", "hipertensión": "hypertension", "ipertensione": "hypertension", "bluthochdruck": "hypertension", "tansiyon": "hypertension", "hoge bloeddruk": "hypertension",
-        "asthme": "asthma", "astm": "asthma", "asma": "asthma", "asthma": "asthma", "astım": "asthma", "astim": "asthma", "astma": "asthma",
-        "thyroïde": "thyroid disorder", "thyroide": "thyroid disorder", "tiroid": "thyroid disorder", "tiroidă": "thyroid disorder", "tiroida": "thyroid disorder", "schilddrüse": "thyroid disorder", "schildklier": "thyroid disorder",
-        "hepatite": "hepatitis", "hepatitis": "hepatitis", "hépatite": "hepatitis", "hepatit": "hepatitis",
-        "allergie": "allergy", "alergie": "allergy", "alergia": "allergy", "alergi": "allergy",
-        "pénicilline": "penicillin", "peniciline": "penicillin", "penicilina": "penicillin", "penicillin": "penicillin", "penisilin": "penicillin", "penicilline": "penicillin",
-        "aspirine": "aspirin", "aspirina": "aspirin", "aspirin": "aspirin",
-        "antibiotique": "antibiotic", "antibiotic": "antibiotic", "antibiótico": "antibiotic", "antibiotico": "antibiotic", "antibiyotik": "antibiotic", "antibioticum": "antibiotic",
-        "hiv": "HIV",
-    }
-
-    to_turkish = {
-        "diabetes": "diyabet", "diabète": "diyabet", "diabete": "diyabet", "diabet": "diyabet", "şeker": "diyabet", "seker": "diyabet", "suiker": "diyabet",
-        "hypertension": "hipertansiyon", "hipertensiune": "hipertansiyon", "hipertensión": "hipertansiyon", "ipertensione": "hipertansiyon", "bluthochdruck": "hipertansiyon", "tansiyon": "hipertansiyon", "hoge bloeddruk": "hipertansiyon",
-        "asthma": "astım", "asthme": "astım", "astm": "astım", "asma": "astım", "astım": "astım", "astma": "astım",
-        "thyroid": "tiroid rahatsızlığı", "thyroïde": "tiroid rahatsızlığı", "thyroide": "tiroid rahatsızlığı", "tiroid": "tiroid rahatsızlığı", "schilddrüse": "tiroid rahatsızlığı", "schildklier": "tiroid rahatsızlığı",
-        "hepatitis": "hepatit", "hepatite": "hepatit", "hépatite": "hepatit", "hepatit": "hepatit",
-        "allergy": "alerji", "allergie": "alerji", "alergie": "alerji", "alergia": "alerji", "alergi": "alerji",
-        "penicillin": "penisilin", "pénicilline": "penisilin", "peniciline": "penisilin", "penicilina": "penisilin", "penisilin": "penisilin", "penicilline": "penisilin",
-        "aspirin": "aspirin", "aspirine": "aspirin", "aspirina": "aspirin",
-        "antibiotic": "antibiyotik", "antibiotique": "antibiyotik", "antibiótico": "antibiyotik", "antibiotico": "antibiyotik", "antibiyotik": "antibiyotik", "antibioticum": "antibiyotik",
-        "hiv": "HIV",
-    }
-
-    dictionary = to_turkish if doctor_language == "Turkish" else to_english
-
-    if lower in dictionary:
-        return dictionary[lower]
-
+    if not answer:
+        return ""
     return online_translate_text(answer, patient_language, doctor_language)
 
 
@@ -469,9 +439,10 @@ def normalize_surgery(answer, patient_language, doctor_language):
         simple_yes = ["yes", "oui", "da", "sí", "si", "sì", "ja", "evet"]
         if lower in simple_yes:
             return LABELS[doctor_language]["yes_star"]
-        return answer + " *" if "*" not in answer else answer
+        translated = online_translate_text(answer, patient_language, doctor_language)
+        return translated + " *" if "*" not in translated else translated
 
-    return translate_patient_detail(answer, patient_language, doctor_language)
+    return online_translate_text(answer, patient_language, doctor_language)
 
 
 def normalize_smoke_alcohol(answer, patient_language, doctor_language):
