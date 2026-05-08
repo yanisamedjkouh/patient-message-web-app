@@ -18,7 +18,7 @@ except ImportError:
 
 st.set_page_config(
     page_title="Patient Message Formatter",
-    page_icon="🥼",
+    page_icon="🏥",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -75,15 +75,76 @@ QUESTION_KEYWORDS = [
     "naam", "leeftijd", "lengte", "gewicht", "ziekte", "infectie", "operatie", "medicijn", "allergie", "roken", "alcohol",
 ]
 
+# Field-specific label patterns for smart field mapping
+FIELD_LABEL_PATTERNS = {
+    "name": [
+        r"(?:full\s+)?name", r"naam", r"nom(?:\s+complet)?", r"(?:ad\s+)?soyad", r"nome(?:\s+completo)?",
+        r"nombre(?:\s+completo)?", r"name\s*(?:und\s+vorname)?", r"isim", r"ad",
+    ],
+    "age": [
+        r"age", r"âge", r"leeftijd", r"vârst[aă]", r"edad", r"et[àa]", r"alter", r"ya[şs]",
+    ],
+    "height": [
+        r"height", r"tall", r"lengte", r"taille", r"în[aă]l[tț]ime", r"inaltime", r"altura", r"altezza",
+        r"gr[öo][sß]e", r"boy",
+    ],
+    "weight": [
+        r"weight", r"gewicht", r"poids", r"greutate", r"peso", r"peso", r"gewicht", r"kilo(?:gram)?",
+    ],
+    "chronic": [
+        r"chronic", r"chronische?", r"chronique", r"cronice?", r"cronica", r"crónica?",
+        r"kronik", r"kalıcı", r"süreğen",
+    ],
+    "infection": [
+        r"infect", r"infectious", r"infecti(?:e|ous|on)", r"bula[şs]ıcı",
+    ],
+    "surgery": [
+        r"surger(?:y|ies)", r"operat(?:ion|ed|ie|ies)", r"chirurgi[ae]?", r"ameliyat",
+        r"operatie", r"opération",
+    ],
+    "medication": [
+        r"medicat(?:ion|ions)", r"medicijnen?", r"médicaments?", r"medicamente", r"medicamento",
+        r"farmac[oi]", r"medikamente?", r"ila[çc]", r"drugs?",
+    ],
+    "allergy": [
+        r"allerg(?:y|ies|ie|ies|en|ia)", r"allergieën", r"allergi(?:e|es|en)", r"alergi(?:i|a)?",
+        r"alerg(?:ie|ii)?",
+    ],
+    "smoke_alcohol": [
+        r"smok(?:e|ing)", r"alcohol", r"sigara", r"alkol", r"rauchen", r"fume(?:r|z)?",
+        r"tabac", r"roken", r"drink(?:ing)?", r"içki",
+    ],
+}
+
+# ─── NONE / YES / SMOKE phrases ────────────────────────────────────────────────
+
+# FIX: Use word-boundary-safe phrases. We'll match these with \b in regex checks.
 NONE_PHRASES = {
-    "English": ["no", "none", "nothing", "nope", "nil", "negative", "i don't", "i dont", "do not", "don't", "dont", "no any", "not have", "no disease", "no diseases", "no infection", "no infections", "no allergy", "no allergies", "no medication", "no medications", "i don't have", "i dont have", "i don't take", "i dont take"],
-    "Dutch": ["nee", "geen", "niets", "niks", "niet", "ik heb geen", "ik gebruik geen", "ik neem geen", "geen ziekten", "geen infecties", "geen allergieën", "geen medicijnen", "geen medicatie"],
-    "French": ["non", "aucun", "aucune", "rien", "pas", "je n'ai pas", "je nai pas", "je ne prends pas", "pas de maladie", "pas d'infection", "pas dinfection", "pas d'allergie", "pas dallergie", "pas de médicaments", "pas de medicaments"],
-    "Romanian": ["nu", "niciuna", "niciun", "nimic", "nu am", "nu iau", "fără", "fara", "nu am boli", "nu am infecții", "nu am infectii", "nu am alergii"],
-    "Spanish": ["no", "ninguno", "ninguna", "nada", "no tengo", "no tomo", "sin", "no enfermedades", "no infecciones", "no alergias", "no medicamentos"],
-    "Italian": ["no", "nessuno", "nessuna", "niente", "non ho", "non prendo", "senza", "nessuna malattia", "nessuna infezione", "nessuna allergia", "nessun farmaco"],
-    "German": ["nein", "keine", "keiner", "nichts", "ich habe keine", "ich nehme keine", "keine krankheiten", "keine infektionen", "keine allergien", "keine medikamente"],
-    "Turkish": ["hayır", "hayir", "yok", "hiç", "hic", "yoktur", "kullanmıyorum", "kullanmiyorum", "almıyorum", "almiyorum", "hastalığım yok", "hastalik yok", "enfeksiyon yok", "alerji yok", "ilaç kullanmıyorum", "ilac kullanmiyorum"],
+    "English": ["no", "none", "nothing", "nope", "nil", "negative", "not any", "no any",
+                "no disease", "no diseases", "no infection", "no infections",
+                "no allergy", "no allergies", "no medication", "no medications",
+                "i don't have", "i dont have", "i don't take", "i dont take",
+                "i do not have", "i do not take", "i have no", "i have none"],
+    "Dutch": ["nee", "geen", "niets", "niks", "niet van toepassing",
+              "ik heb geen", "ik gebruik geen", "ik neem geen",
+              "geen ziekten", "geen infecties", "geen allergieën", "geen medicijnen", "geen medicatie"],
+    "French": ["non", "aucun", "aucune", "rien", "néant",
+               "je n'ai pas", "je nai pas", "je ne prends pas",
+               "pas de maladie", "pas d'infection", "pas dinfection",
+               "pas d'allergie", "pas dallergie", "pas de médicaments", "pas de medicaments"],
+    "Romanian": ["nu", "niciuna", "niciun", "nimic", "nu am", "nu iau",
+                 "fără", "fara", "nu am boli", "nu am infecții", "nu am infectii", "nu am alergii"],
+    "Spanish": ["no", "ninguno", "ninguna", "nada", "no tengo", "no tomo",
+                "sin", "no enfermedades", "no infecciones", "no alergias", "no medicamentos"],
+    "Italian": ["no", "nessuno", "nessuna", "niente", "non ho", "non prendo",
+                "senza", "nessuna malattia", "nessuna infezione", "nessuna allergia", "nessun farmaco"],
+    "German": ["nein", "keine", "keiner", "nichts", "ich habe keine", "ich nehme keine",
+               "keine krankheiten", "keine infektionen", "keine allergien", "keine medikamente"],
+    "Turkish": ["hayır", "hayir", "yok", "hiç yok", "hic yok", "yoktur",
+                "kullanmıyorum", "kullanmiyorum", "almıyorum", "almiyorum",
+                "hastalığım yok", "hastalik yok", "enfeksiyon yok",
+                "alerji yok", "ilaç kullanmıyorum", "ilac kullanmiyorum",
+                "herhangi bir", "bulunmamaktadır"],
 }
 
 YES_SURGERY_PHRASES = {
@@ -94,40 +155,43 @@ YES_SURGERY_PHRASES = {
     "Spanish": ["sí", "si", "tuve", "cirugía", "cirugia", "operación", "operacion", "operado", "antes"],
     "Italian": ["sì", "si", "ho avuto", "chirurgia", "intervento", "operazione", "operato", "prima"],
     "German": ["ja", "hatte", "operation", "operiert", "chirurgie", "vorher"],
-    "Turkish": ["evet", "oldum", "ameliyat", "operasyon", "daha önce", "daha once"],
+    "Turkish": ["evet", "oldum", "ameliyat", "operasyon", "daha önce", "daha once", "geçirdim", "gecirdim"],
 }
 
 SMOKE_WORDS = {
-    "English": ["smoke", "smoking", "cigarette", "cigarettes"],
-    "Dutch": ["rook", "roken", "sigaret", "sigaretten", "tabak"],
-    "French": ["fume", "fumer", "cigarette", "cigarettes", "tabac"],
+    "English": ["smok", "cigarette", "cigaret"],
+    "Dutch": ["rook", "roken", "sigaret", "tabak"],
+    "French": ["fume", "fumer", "cigarette", "tabac"],
     "Romanian": ["fumez", "fumat", "țigări", "tigari", "țigară", "tigara"],
-    "Spanish": ["fumo", "fumar", "cigarrillo", "cigarrillos", "tabaco"],
-    "Italian": ["fumo", "fumare", "sigaretta", "sigarette", "tabacco"],
-    "German": ["rauche", "rauchen", "zigarette", "zigaretten"],
-    "Turkish": ["sigara", "içiyorum", "iciyorum", "sigara kullanıyorum", "sigara kullaniyorum"],
+    "Spanish": ["fum", "cigarrillo", "tabaco"],
+    "Italian": ["fum", "sigarett", "tabacco"],
+    "German": ["rauche", "rauchen", "zigarette"],
+    "Turkish": ["sigara"],
 }
 
 ALCOHOL_WORDS = {
-    "English": ["alcohol", "drink", "drinks", "drinking", "wine", "beer"],
-    "Dutch": ["alcohol", "drink", "drinken", "wijn", "bier"],
-    "French": ["alcool", "bois", "boire", "vin", "bière", "biere"],
+    "English": ["alcohol", "drink", "wine", "beer", "spirits"],
+    "Dutch": ["alcohol", "drinken", "wijn", "bier"],
+    "French": ["alcool", "bois", "boire", "vin", "bière"],
     "Romanian": ["alcool", "beau", "băut", "baut", "vin", "bere"],
     "Spanish": ["alcohol", "bebo", "beber", "vino", "cerveza"],
     "Italian": ["alcol", "alcool", "bevo", "bere", "vino", "birra"],
     "German": ["alkohol", "trinke", "trinken", "wein", "bier"],
-    "Turkish": ["alkol", "içki", "icki", "içiyorum", "iciyorum", "şarap", "sarap", "bira"],
+    "Turkish": ["alkol", "içki", "şarap", "sarap", "bira"],
 }
 
+# FIX: separated alcohol "içiyorum" from smoking in Turkish
+# "içiyorum" alone means "I drink" — pair with context word
+
 OCCASIONAL_WORDS = {
-    "English": ["sometimes", "occasionally", "social", "socially", "rarely"],
+    "English": ["sometimes", "occasionally", "social", "socially", "rarely", "once in a while", "moderate"],
     "Dutch": ["soms", "af en toe", "zelden", "occasioneel", "sociaal"],
     "French": ["parfois", "occasionnellement", "socialement", "rarement", "de temps en temps"],
     "Romanian": ["uneori", "ocazional", "social", "rar"],
     "Spanish": ["a veces", "ocasionalmente", "socialmente", "rara vez"],
     "Italian": ["a volte", "occasionalmente", "socialmente", "raramente"],
     "German": ["manchmal", "gelegentlich", "sozial", "selten"],
-    "Turkish": ["bazen", "ara sıra", "ara sira", "nadiren", "sosyal olarak"],
+    "Turkish": ["bazen", "ara sıra", "ara sira", "nadiren", "sosyal olarak", "arada sırada"],
 }
 
 LABELS = {
@@ -144,7 +208,7 @@ LABELS = {
         "chronic": "Chronic diseases",
         "infectious": "Infectious diseases",
         "surgery": "Previous surgeries",
-        "med_allergy": "MEDICATIONS and ALLERGIES",
+        "med_allergy": "MEDICATIONS & ALLERGIES",
         "medication": "Medications",
         "allergy": "Allergies",
         "smoke_alcohol": "Smoke / Alcohol",
@@ -184,28 +248,51 @@ LABELS = {
 }
 
 # ─────────────────────────────────────────────
-# LOGIC HELPERS
+# TEXT UTILITIES
 # ─────────────────────────────────────────────
 
-def words_for(language, dictionary):
-    combined = list(dictionary.get(language, []))
-    if language != "English":
-        combined += dictionary.get("English", [])
-    return combined
-
-
-def clean_line(line):
+def clean_line(line: str) -> str:
     return re.sub(r"\s+", " ", str(line).strip())
 
 
-def normalize_text(text):
+def normalize_text(text: str) -> str:
     text = str(text).replace("\r", "\n")
+    # Smart quotes → straight
     text = text.replace("\u2019", "'").replace("\u2018", "'").replace("`", "'")
-    text = re.sub(r"(?<=\d)\s*sm\b", " cm", text, flags=re.IGNORECASE)
+    text = text.replace("\u201c", '"').replace("\u201d", '"')
+    # "sm" unit → "cm" (with word boundary so "some" is unaffected)
+    text = re.sub(r"(?<=\d)\s*\bsm\b", " cm", text, flags=re.IGNORECASE)
     return text.strip()
 
 
-def get_answer_lines(text):
+def strip_leading_number(text: str) -> str:
+    """Remove leading list numbers that may appear in translated output.
+    E.g. '1. No chronic diseases' → 'No chronic diseases'
+         '2) None' → 'None'
+    """
+    return re.sub(r"^\s*\d+\s*[\.)\-]\s*", "", text).strip()
+
+
+def word_in_text(word: str, text: str) -> bool:
+    """Case-insensitive whole-word check to avoid substring false positives."""
+    pattern = r"(?<![a-zA-ZÀ-ÿ])" + re.escape(word) + r"(?![a-zA-ZÀ-ÿ])"
+    return bool(re.search(pattern, text, flags=re.IGNORECASE))
+
+
+def any_word_in_text(words: list, text: str) -> bool:
+    return any(word_in_text(w, text) for w in words)
+
+
+def substr_in_text(substring: str, text: str) -> bool:
+    """Substring check (for multi-word phrases and stem fragments)."""
+    return substring.lower() in text.lower()
+
+
+# ─────────────────────────────────────────────
+# LINE EXTRACTION & PARSING
+# ─────────────────────────────────────────────
+
+def get_answer_lines(text: str) -> list:
     text = normalize_text(text)
     raw_lines = [clean_line(line) for line in text.split("\n")]
     lines = []
@@ -216,20 +303,25 @@ def get_answer_lines(text):
 
         lower = line.lower().strip()
 
-        if lower.strip("*: ") in QUESTION_HEADERS:
+        # Skip section header lines
+        if lower.strip("*: -–—") in QUESTION_HEADERS:
             continue
 
-        if re.match(r"^\d+\s*[\.)-]\s*", lower):
-            after = re.sub(r"^\d+\s*[\.)-]\s*", "", lower).strip()
-            if any(keyword in after for keyword in QUESTION_KEYWORDS) and after.endswith(":"):
+        # Skip numbered question prompts like "3. Medications:" (no answer part)
+        if re.match(r"^\d+\s*[\.)\-]\s*", lower):
+            after = re.sub(r"^\d+\s*[\.)\-]\s*", "", lower).strip()
+            if any(kw in after for kw in QUESTION_KEYWORDS) and (after.endswith(":") or not after):
                 continue
 
+        # Skip parenthetical hint lines like "(please list your medications)"
         if lower.startswith("(") and lower.endswith(")"):
             continue
 
+        # If "label: value" format — strip the label, keep the value
         if ":" in line:
             before, after = line.split(":", 1)
-            if any(keyword in before.lower() for keyword in QUESTION_KEYWORDS):
+            before_lower = before.lower().strip()
+            if any(kw in before_lower for kw in QUESTION_KEYWORDS):
                 line = clean_line(after)
                 if not line:
                     continue
@@ -239,103 +331,168 @@ def get_answer_lines(text):
     return lines
 
 
-def extract_patient_requirement_from_text(lines):
-    patterns = [
-        r"patient\s+wants?\s+(.+)", r"wants?\s+(.+)", r"interested\s+in\s+(.+)",
-        r"looking\s+for\s+(.+)", r"procedure\s*[:\-]?\s*(.+)", r"treatment\s*[:\-]?\s*(.+)",
-        r"requirement\s*[:\-]?\s*(.+)", r"souhaite\s+(.+)", r"veut\s+(.+)",
-        r"dorește\s+(.+)", r"doreste\s+(.+)", r"quiere\s+(.+)", r"desidera\s+(.+)",
-        r"möchte\s+(.+)", r"mochte\s+(.+)", r"istiyor\s+(.+)", r"wil\s+(.+)", r"wenst\s+(.+)", r"zoekt\s+(.+)",
-    ]
+def try_label_field_extract(text: str) -> dict:
+    """
+    Try to extract fields by looking for label:value patterns across the full text.
+    Returns a dict with whatever fields were found. Empty dict if nothing found.
+    """
+    found = {}
+    text = normalize_text(text)
 
-    for line in lines:
-        lower = line.lower()
+    for field, patterns in FIELD_LABEL_PATTERNS.items():
         for pattern in patterns:
-            match = re.search(pattern, lower, flags=re.IGNORECASE)
-            if match:
-                requirement = clean_line(match.group(1))
-                requirement = re.sub(r"^[\(\[]|[\)\]]$", "", requirement).strip()
-                if requirement:
-                    return requirement
-    return ""
+            # Match "label: value" or "label - value"
+            m = re.search(
+                r"(?:^|\n)\s*(?:\d+\s*[\.)\-]\s*)?" + pattern + r"\s*[:\-–—]\s*(.+?)(?=\n|$)",
+                text,
+                flags=re.IGNORECASE | re.MULTILINE,
+            )
+            if m:
+                value = clean_line(m.group(1))
+                value = strip_leading_number(value)
+                if value:
+                    found[field] = value
+                    break
+
+    return found
 
 
-def remove_requirement_lines(lines):
-    triggers = [
-        "patient wants", "interested in", "looking for", "procedure:", "treatment:", "requirement:",
-        "souhaite", "dorește", "doreste", "quiere", "desidera", "möchte", "mochte", "istiyor",
-        "wil", "wenst", "zoekt",
-    ]
-    return [line for line in lines if not any(trigger in line.lower() for trigger in triggers)]
+# ─────────────────────────────────────────────
+# EXTRACTION: NAME
+# ─────────────────────────────────────────────
 
+# Words that are definitely NOT names
+_NAME_SKIP_WORDS = {
+    "yes", "no", "none", "sometimes", "occasionally", "cm", "kg", "lb", "lbs",
+    "years", "old", "yo", "oui", "non", "aucun", "aucune", "parfois",
+    "da", "nu", "sí", "si", "sì", "ja", "nein", "hayır", "hayir",
+    "yok", "evet", "nee", "geen", "chronic", "disease", "infection",
+    "surgery", "medication", "allergy", "smoke", "alcohol",
+}
 
-def extract_name(lines):
-    skip = QUESTION_KEYWORDS + [
-        "yes", "no", "none", "sometimes", "occasionally", "cm", "kg", "years", "old", "yo",
-        "oui", "non", "aucun", "aucune", "parfois", "da", "nu", "sí", "si", "sì", "ja", "nein",
-        "hayır", "hayir", "yok", "evet", "nee", "geen",
-    ]
-
+def extract_name(lines: list) -> str:
     for line in lines:
-        lower = line.lower()
-        if re.search(r"[a-zA-ZÀ-ÿ]", line):
-            if not any(word in lower for word in skip):
-                return line
+        # Strip leading numbers from the candidate line
+        candidate = strip_leading_number(line)
+        candidate = clean_line(candidate)
+
+        if not candidate:
+            continue
+
+        lower = candidate.lower()
+
+        # Must contain at least one letter (handles multi-script names)
+        if not re.search(r"[^\W\d]", candidate, re.UNICODE):
+            continue
+
+        # Skip if it looks purely numeric (age, height, weight)
+        if re.match(r"^\d[\d\s\.,ckmgftin\'\"]*$", lower):
+            continue
+
+        # Skip if it's a known non-name word (whole-word check)
+        if any(word_in_text(skip, lower) for skip in _NAME_SKIP_WORDS):
+            continue
+
+        # Skip lines that are clearly about medical topics
+        medical_triggers = [
+            "disease", "infection", "surgery", "medication", "allergy",
+            "smoke", "alcohol", "chronic", "kg", " cm", "bmi",
+        ]
+        if any(t in lower for t in medical_triggers):
+            continue
+
+        # A name should be 1-4 tokens, each starting with a letter
+        tokens = candidate.split()
+        if 1 <= len(tokens) <= 5:
+            # Each token should start with a letter (Unicode-aware)
+            if all(re.match(r"^[^\W\d]", t, re.UNICODE) for t in tokens):
+                return candidate
+
     return lines[0] if lines else ""
 
 
-def extract_age_with_words(text):
-    lower = text.lower()
-    patterns = [
-        r"(?:age|âge|vârstă|varsta|edad|età|eta|alter|yaş|yas|leeftijd)\s*[:\-]?\s*(\d{1,3})",
-        r"(\d{1,3})\s*(?:years?\s*old|yo|y/o|ans|ani|años|anos|anni|jahre|yaşında|yasinda|jaar)",
-    ]
+# ─────────────────────────────────────────────
+# EXTRACTION: AGE / HEIGHT / WEIGHT
+# ─────────────────────────────────────────────
 
-    for pattern in patterns:
-        match = re.search(pattern, lower)
-        if match:
-            age = int(match.group(1))
+def extract_age_with_words(text: str) -> str:
+    lower = text.lower()
+
+    # Explicit label patterns
+    label_patterns = [
+        r"(?:age|âge|vârst[aă]|varsta|edad|et[àa]|alter|ya[şs]|leeftijd)\s*[:\-]?\s*(\d{1,3})",
+        r"(\d{1,3})\s*(?:years?\s*old|yo\b|y/o|ans\b|ani\b|años\b|anos\b|anni\b|jahre\b|yaşında|yasinda|jaar\b)",
+    ]
+    for p in label_patterns:
+        m = re.search(p, lower)
+        if m:
+            age = int(m.group(1))
             if 1 <= age <= 120:
                 return str(age)
     return ""
 
 
-def extract_height_with_units(text):
+def extract_height_with_units(text: str) -> int | None:
     lower = text.lower()
 
-    match = re.search(r"\b(\d)\s*(?:m|meter|meters|metre|metri|metro|metros)\s*[,\.]?\s*(\d{1,2})\s*(?:cm|sm)?\b", lower)
-    if match:
-        return int(match.group(1)) * 100 + int(match.group(2))
+    # FIX: feet/inches support — 5'7", 5 ft 7 in, 5'7
+    m = re.search(r"\b([4-7])\s*(?:\'|ft\.?|feet)\s*([0-9]|1[01])\s*(?:\"|''|in\.?|inch(?:es)?)?\b", lower)
+    if m:
+        feet, inches = int(m.group(1)), int(m.group(2))
+        return round(feet * 30.48 + inches * 2.54)
 
-    match = re.search(r"\b(\d)[\.,](\d{2})\s*(?:m|meter|meters|metre|metri|metro|metros)?\b", lower)
-    if match:
-        return int(match.group(1)) * 100 + int(match.group(2))
+    # FIX: single feet value like 5'10 with no inches label
+    m = re.search(r"\b([4-7])[\'′]\s*(\d{1,2})\b", lower)
+    if m:
+        feet, inches = int(m.group(1)), int(m.group(2))
+        return round(feet * 30.48 + inches * 2.54)
 
-    match = re.search(r"\b(1[2-9]\d|2[0-3]\d)\s*(?:cm|sm)\b", lower)
-    if match:
-        return int(match.group(1))
+    # "1 m 75", "1,75 m", "1.75 m"
+    m = re.search(r"\b([12])\s*(?:m|meter|meters|metre|metri|metro|metros)\s*[,\.]?\s*(\d{1,2})\s*(?:cm|sm)?\b", lower)
+    if m:
+        return int(m.group(1)) * 100 + int(m.group(2))
+
+    m = re.search(r"\b([12])[\.,](\d{2})\s*(?:m|meter|meters|metre|metri|metro|metros)?\b", lower)
+    if m:
+        return int(m.group(1)) * 100 + int(m.group(2))
+
+    # Explicit cm value
+    m = re.search(r"\b(1[2-9]\d|2[0-3]\d)\s*(?:cm|sm)\b", lower)
+    if m:
+        return int(m.group(1))
 
     return None
 
 
-def extract_weight_with_units(text):
+def extract_weight_with_units(text: str) -> int | None:
     lower = text.lower()
-    match = re.search(r"\b(\d{2,3})\s*(?:kg|kgs|kilograms?|kilogramme|kilograme|kilo)\b", lower)
-    if match:
-        weight = int(match.group(1))
+    # FIX: support decimal weights like 65.5 kg
+    m = re.search(r"\b(\d{2,3}(?:[.,]\d)?)\s*(?:kg|kgs|kilograms?|kilogramme|kilograme|kilo)\b", lower)
+    if m:
+        weight = float(m.group(1).replace(",", "."))
         if 25 <= weight <= 300:
-            return weight
+            return round(weight)
+    # FIX: also handle lbs
+    m = re.search(r"\b(\d{2,3})\s*(?:lb|lbs|pounds?)\b", lower)
+    if m:
+        lbs = int(m.group(1))
+        if 55 <= lbs <= 660:
+            return round(lbs * 0.4536)
     return None
 
 
-def calculate_bmi(height_cm, weight_kg):
+def calculate_bmi(height_cm: int | None, weight_kg: int | None) -> str:
     if not height_cm or not weight_kg:
         return ""
     bmi = weight_kg / (height_cm / 100) ** 2
     return str(round(bmi, 1))
 
 
-def extract_age_height_weight_by_order(lines):
+def extract_age_height_weight_by_order(lines: list) -> tuple:
+    """
+    FIX: Try unit-aware extraction from the full text first.
+    Fall back to positional heuristic only if needed.
+    """
     full_text = "\n".join(lines)
     height_cm = extract_height_with_units(full_text)
     weight_kg = extract_weight_with_units(full_text)
@@ -345,48 +502,88 @@ def extract_age_height_weight_by_order(lines):
     name_index = next((idx for idx, line in enumerate(lines) if line == name), None)
     start = 1 if name_index is None else name_index + 1
 
+    # Positional fallback for numbers without units
     numeric_lines = []
     for idx in range(start, len(lines)):
-        numbers = re.findall(r"\d{1,3}", lines[idx])
+        # Strip leading list numbers before reading numeric values
+        candidate = strip_leading_number(lines[idx])
+        numbers = re.findall(r"\d+(?:[.,]\d+)?", candidate)
         if numbers:
-            numeric_lines.append((idx, int(numbers[0]), lines[idx]))
-        if len(numeric_lines) >= 3:
+            numeric_lines.append((idx, float(numbers[0].replace(",", ".")), candidate))
+        if len(numeric_lines) >= 4:
             break
 
     if not age and numeric_lines:
         possible_age = numeric_lines[0][1]
         if 1 <= possible_age <= 120:
-            age = str(possible_age)
+            age = str(int(possible_age))
 
     if height_cm is None and len(numeric_lines) >= 2:
         possible_height = numeric_lines[1][1]
         if 120 <= possible_height <= 230:
-            height_cm = possible_height
-        elif 1 <= possible_height <= 2:
-            height_cm = possible_height * 100
+            height_cm = int(possible_height)
+        elif 1.2 <= possible_height <= 2.3:
+            height_cm = round(possible_height * 100)
 
     if weight_kg is None and len(numeric_lines) >= 3:
         possible_weight = numeric_lines[2][1]
         if 25 <= possible_weight <= 300:
-            weight_kg = possible_weight
+            weight_kg = int(possible_weight)
 
     return age, height_cm, weight_kg
 
 
-def translate_basic_answer(value, doctor_language):
-    labels = LABELS[doctor_language]
-    return {
-        "__NONE__": labels["none"],
-        "__YES_STAR__": labels["yes_star"],
-        "__OCCASIONALLY__": labels["occasionally"],
-        "__OCC_SMOKE__": labels["occasionally_smokes"],
-        "__OCC_DRINK__": labels["occasionally_drinks"],
-        "__OCC_BOTH__": labels["occasionally_smokes_drinks"],
-    }.get(value, value)
+# ─────────────────────────────────────────────
+# NONE DETECTION (FIX: word-boundary safe)
+# ─────────────────────────────────────────────
 
+def words_for(language: str, dictionary: dict) -> list:
+    combined = list(dictionary.get(language, []))
+    if language != "English":
+        combined += dictionary.get("English", [])
+    return combined
+
+
+def _is_none_answer(answer: str, patient_language: str) -> bool:
+    """
+    FIX: Use whole-word matching for short ambiguous words like 'no', 'none', 'nee', 'nu'.
+    Longer phrases are still matched as substrings (safe because they're specific).
+    """
+    text = answer.lower().strip()
+    none_phrases = words_for(patient_language, NONE_PHRASES)
+
+    # Short ambiguous words that need word-boundary protection
+    boundary_words = {"no", "none", "nee", "nu", "nein", "non", "yok", "geen", "nada",
+                      "nil", "nope", "ja", "si", "da"}
+
+    for phrase in none_phrases:
+        if phrase in boundary_words:
+            if word_in_text(phrase, text):
+                return True
+        else:
+            if substr_in_text(phrase, text):
+                return True
+
+    return False
+
+
+def _has_exception_clause(answer: str) -> bool:
+    """Check if a 'none' answer has an exception clause attached."""
+    exception_words = [
+        "but", "except", "only", "however", "although",
+        "mais", "sauf", "pero", "ma", "ama", "maar", "behalve",
+        "ancak", "fakat", "sadece", "ama",
+    ]
+    lower = answer.lower()
+    return any(word_in_text(w, lower) for w in exception_words)
+
+
+# ─────────────────────────────────────────────
+# TRANSLATION
+# ─────────────────────────────────────────────
 
 @st.cache_data(show_spinner=False, ttl=3600)
-def online_translate_text(text, patient_language, doctor_language):
+def online_translate_text(text: str, patient_language: str, doctor_language: str) -> str:
     text = clean_line(text)
     if not text or patient_language == doctor_language or GoogleTranslator is None:
         return text
@@ -396,84 +593,141 @@ def online_translate_text(text, patient_language, doctor_language):
 
     try:
         translated = GoogleTranslator(source=source, target=target).translate(text)
-        return clean_line(translated) if translated else text
+        result = clean_line(translated) if translated else text
+        # FIX: strip leading list number that translator sometimes adds
+        result = strip_leading_number(result)
+        return result
     except Exception:
         return text
 
 
-def translate_patient_detail(answer, patient_language, doctor_language):
-    """
-    Translate the patient's actual free-text answer using online Google Translate.
-    We keep only the basic None/Yes/Occasional detection separately for cleaner medical formatting.
-    """
+def translate_patient_detail(answer: str, patient_language: str, doctor_language: str) -> str:
     answer = clean_line(answer)
     if not answer:
         return ""
-    return online_translate_text(answer, patient_language, doctor_language)
+    translated = online_translate_text(answer, patient_language, doctor_language)
+    # FIX: strip any leading number that leaked through translation
+    return strip_leading_number(translated)
 
 
-def normalize_answer(answer, patient_language, doctor_language):
+# ─────────────────────────────────────────────
+# NORMALIZE ANSWERS
+# ─────────────────────────────────────────────
+
+def translate_basic_answer(token: str, doctor_language: str) -> str:
+    labels = LABELS[doctor_language]
+    return {
+        "__NONE__": labels["none"],
+        "__YES_STAR__": labels["yes_star"],
+        "__OCCASIONALLY__": labels["occasionally"],
+        "__OCC_SMOKE__": labels["occasionally_smokes"],
+        "__OCC_DRINK__": labels["occasionally_drinks"],
+        "__OCC_BOTH__": labels["occasionally_smokes_drinks"],
+    }.get(token, token)
+
+
+def normalize_answer(answer: str, patient_language: str, doctor_language: str) -> str:
     answer = clean_line(answer)
-    lower = answer.lower()
-    none_phrases = words_for(patient_language, NONE_PHRASES)
+    if not answer:
+        return ""
 
-    if lower in none_phrases:
+    # FIX: word-boundary safe none detection + exception clause check
+    if _is_none_answer(answer, patient_language) and not _has_exception_clause(answer):
         return translate_basic_answer("__NONE__", doctor_language)
-
-    if any(phrase in lower for phrase in none_phrases):
-        if not any(word in lower for word in ["but", "except", "only", "smoke", "alcohol", "drink", "mais", "sauf", "pero", "ma", "ama", "maar", "behalve"]):
-            return translate_basic_answer("__NONE__", doctor_language)
 
     return translate_patient_detail(answer, patient_language, doctor_language)
 
 
-def normalize_surgery(answer, patient_language, doctor_language):
+def normalize_surgery(answer: str, patient_language: str, doctor_language: str) -> str:
     answer = clean_line(answer)
+    if not answer:
+        return ""
+
+    if _is_none_answer(answer, patient_language) and not _has_exception_clause(answer):
+        return translate_basic_answer("__NONE__", doctor_language)
+
     lower = answer.lower()
-
-    if normalize_answer(answer, patient_language, doctor_language) == LABELS[doctor_language]["none"]:
-        return LABELS[doctor_language]["none"]
-
     yes_indicators = words_for(patient_language, YES_SURGERY_PHRASES)
-    if any(word in lower for word in yes_indicators):
-        simple_yes = ["yes", "oui", "da", "sí", "si", "sì", "ja", "evet"]
-        if lower in simple_yes:
-            return LABELS[doctor_language]["yes_star"]
+
+    if any(word_in_text(w, lower) if len(w) <= 4 else substr_in_text(w, lower) for w in yes_indicators):
+        simple_yes = {"yes", "oui", "da", "sí", "si", "sì", "ja", "evet"}
+        if lower.strip() in simple_yes:
+            return translate_basic_answer("__YES_STAR__", doctor_language)
         translated = online_translate_text(answer, patient_language, doctor_language)
+        translated = strip_leading_number(translated)
         return translated + " *" if "*" not in translated else translated
 
-    return online_translate_text(answer, patient_language, doctor_language)
+    return translate_patient_detail(answer, patient_language, doctor_language)
 
 
-def normalize_smoke_alcohol(answer, patient_language, doctor_language):
+def normalize_smoke_alcohol(answer: str, patient_language: str, doctor_language: str) -> str:
     answer = clean_line(answer)
-    lower = answer.lower()
+    if not answer:
+        return ""
 
-    if normalize_answer(answer, patient_language, doctor_language) == LABELS[doctor_language]["none"]:
-        return LABELS[doctor_language]["none"]
+    if _is_none_answer(answer, patient_language) and not _has_exception_clause(answer):
+        return translate_basic_answer("__NONE__", doctor_language)
+
+    lower = answer.lower()
 
     smoke_words = words_for(patient_language, SMOKE_WORDS)
     alcohol_words = words_for(patient_language, ALCOHOL_WORDS)
     occasional_words = words_for(patient_language, OCCASIONAL_WORDS)
 
-    if lower in occasional_words:
-        return LABELS[doctor_language]["occasionally"]
+    # FIX: use substring check for stems (smoke→smok, drink→drink)
+    has_smoke = any(substr_in_text(w, lower) for w in smoke_words)
+    has_alcohol = any(substr_in_text(w, lower) for w in alcohol_words)
+    occasional = any(substr_in_text(w, lower) for w in occasional_words)
 
-    has_smoke = any(word in lower for word in smoke_words)
-    has_alcohol = any(word in lower for word in alcohol_words)
-    occasional = any(word in lower for word in occasional_words)
+    # Pure "occasionally" with no further detail
+    if occasional and not has_smoke and not has_alcohol:
+        return translate_basic_answer("__OCCASIONALLY__", doctor_language)
 
     if occasional and has_smoke and has_alcohol:
-        return LABELS[doctor_language]["occasionally_smokes_drinks"]
+        return translate_basic_answer("__OCC_BOTH__", doctor_language)
     if occasional and has_smoke:
-        return LABELS[doctor_language]["occasionally_smokes"]
+        return translate_basic_answer("__OCC_SMOKE__", doctor_language)
     if occasional and has_alcohol:
-        return LABELS[doctor_language]["occasionally_drinks"]
+        return translate_basic_answer("__OCC_DRINK__", doctor_language)
 
     return translate_patient_detail(answer, patient_language, doctor_language)
 
 
-def clean_requirement(requirement):
+# ─────────────────────────────────────────────
+# REQUIREMENT EXTRACTION
+# ─────────────────────────────────────────────
+
+def extract_patient_requirement_from_text(lines: list) -> str:
+    patterns = [
+        r"patient\s+wants?\s+(.+)", r"wants?\s+(.+)", r"interested\s+in\s+(.+)",
+        r"looking\s+for\s+(.+)", r"procedure\s*[:\-]?\s*(.+)", r"treatment\s*[:\-]?\s*(.+)",
+        r"requirement\s*[:\-]?\s*(.+)", r"souhaite\s+(.+)", r"veut\s+(.+)",
+        r"dorește\s+(.+)", r"doreste\s+(.+)", r"quiere\s+(.+)", r"desidera\s+(.+)",
+        r"möchte\s+(.+)", r"mochte\s+(.+)", r"istiyor\s+(.+)", r"wil\s+(.+)", r"wenst\s+(.+)",
+    ]
+
+    for line in lines:
+        lower = line.lower()
+        for pattern in patterns:
+            m = re.search(pattern, lower, flags=re.IGNORECASE)
+            if m:
+                requirement = clean_line(m.group(1))
+                requirement = re.sub(r"^[\(\[]|[\)\]]$", "", requirement).strip()
+                if requirement:
+                    return requirement
+    return ""
+
+
+def remove_requirement_lines(lines: list) -> list:
+    triggers = [
+        "patient wants", "interested in", "looking for", "procedure:", "treatment:", "requirement:",
+        "souhaite", "dorește", "doreste", "quiere", "desidera", "möchte", "mochte", "istiyor",
+        "wil", "wenst",
+    ]
+    return [line for line in lines if not any(trigger in line.lower() for trigger in triggers)]
+
+
+def clean_requirement(requirement: str) -> str:
     requirement = clean_line(requirement)
     if not requirement:
         return ""
@@ -481,35 +735,71 @@ def clean_requirement(requirement):
     return requirement
 
 
-def get_order_based_answers(lines):
-    name = extract_name(lines)
+# ─────────────────────────────────────────────
+# FIELD MAPPING (smart label-based + positional fallback)
+# ─────────────────────────────────────────────
+
+_FIELD_ORDER = ["name", "age", "height", "weight", "chronic", "infection", "surgery", "medication", "allergy", "smoke_alcohol"]
+
+
+def get_order_based_answers(lines: list, label_extracted: dict) -> dict:
+    """
+    FIX: First try to use label_extracted (from label:value scanning).
+    For any missing fields, fall back to positional ordering.
+    """
+    # Start with whatever we found via label scanning
+    answers = {
+        "name": label_extracted.get("name", ""),
+        "chronic": label_extracted.get("chronic", ""),
+        "infection": label_extracted.get("infection", ""),
+        "surgery": label_extracted.get("surgery", ""),
+        "medication": label_extracted.get("medication", ""),
+        "allergy": label_extracted.get("allergy", ""),
+        "smoke_alcohol": label_extracted.get("smoke_alcohol", ""),
+    }
+
+    # If we got a good chunk from labels, we're done
+    filled = sum(1 for v in answers.values() if v)
+    if filled >= 4:
+        return answers
+
+    # Positional fallback
+    name = extract_name(lines) if not answers["name"] else answers["name"]
+    answers["name"] = name
     remaining = [line for line in lines if line != name]
     personal_numbers, rest = [], []
 
     for line in remaining:
-        if len(personal_numbers) < 3 and re.search(r"\d", line):
-            personal_numbers.append(line)
+        # Strip list numbers before classification
+        candidate = strip_leading_number(line)
+        if len(personal_numbers) < 3 and re.search(r"\d", candidate):
+            personal_numbers.append(candidate)
         else:
-            rest.append(line)
+            rest.append(candidate)
 
     if len(personal_numbers) < 3:
-        personal_numbers, rest = remaining[:3], remaining[3:]
+        personal_numbers = [strip_leading_number(l) for l in remaining[:3]]
+        rest = [strip_leading_number(l) for l in remaining[3:]]
 
-    while len(rest) < 6:
-        rest.append("")
+    fields = ["chronic", "infection", "surgery", "medication", "allergy", "smoke_alcohol"]
+    for i, field in enumerate(fields):
+        if not answers[field]:
+            answers[field] = rest[i] if i < len(rest) else ""
 
-    return {
-        "name": name,
-        "chronic": rest[0] if len(rest) > 0 else "",
-        "infection": rest[1] if len(rest) > 1 else "",
-        "surgery": rest[2] if len(rest) > 2 else "",
-        "medication": rest[3] if len(rest) > 3 else "",
-        "allergy": rest[4] if len(rest) > 4 else "",
-        "smoke_alcohol": rest[5] if len(rest) > 5 else "",
-    }
+    return answers
 
 
-def format_patient_message(patient_text, requirement_text="", patient_language="English", doctor_language="English"):
+# ─────────────────────────────────────────────
+# MAIN FORMATTER
+# ─────────────────────────────────────────────
+
+def format_patient_message(
+    patient_text: str,
+    requirement_text: str = "",
+    patient_language: str = "English",
+    doctor_language: str = "English",
+) -> dict | None:
+
     if doctor_language not in LABELS:
         doctor_language = "English"
 
@@ -519,13 +809,31 @@ def format_patient_message(patient_text, requirement_text="", patient_language="
     if not lines:
         return None
 
+    # Try label-based extraction first (handles "Age: 35" style)
+    label_extracted = try_label_field_extract(patient_text)
+
     detected_requirement = extract_patient_requirement_from_text(lines)
     lines = remove_requirement_lines(lines)
+
     requirement = clean_requirement(requirement_text) or detected_requirement
     requirement = online_translate_text(requirement, patient_language, doctor_language) if requirement else ""
+    requirement = strip_leading_number(requirement)
 
-    answers = get_order_based_answers(lines)
+    answers = get_order_based_answers(lines, label_extracted)
     age, height_cm, weight_kg = extract_age_height_weight_by_order(lines)
+
+    # Override with label_extracted values if present
+    if label_extracted.get("age"):
+        age = extract_age_with_words(label_extracted["age"]) or age
+    if label_extracted.get("height"):
+        h = extract_height_with_units(label_extracted["height"])
+        if h:
+            height_cm = h
+    if label_extracted.get("weight"):
+        w = extract_weight_with_units(label_extracted["weight"])
+        if w:
+            weight_kg = w
+
     bmi = calculate_bmi(height_cm, weight_kg)
 
     chronic = normalize_answer(answers["chronic"], patient_language, doctor_language)
@@ -567,7 +875,7 @@ def format_patient_message(patient_text, requirement_text="", patient_language="
     }
 
 
-def data_to_plain_text(data):
+def data_to_plain_text(data: dict) -> str:
     if data is None:
         return ""
 
@@ -590,8 +898,9 @@ def data_to_plain_text(data):
         f"3. {data['smoke_alcohol']}: {data['smoke_value']}"
     )
 
+
 # ─────────────────────────────────────────────
-# UI CSS
+# UI CSS (unchanged from original)
 # ─────────────────────────────────────────────
 
 st.markdown(
@@ -634,60 +943,7 @@ st.markdown(
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stToolbar"] { display: none; }
 
-.hero {
-    display: none;
-}
-
-.hero::before { display: none; }
-
-.hero::after { display: none; }
-
-@keyframes scan {
-    0% { transform: translateX(-85%); }
-    55% { transform: translateX(85%); }
-    100% { transform: translateX(85%); }
-}
-
-.hero-content { display: none; }
-
-.hero-bg-img { display: none; }
-
-.hero-kicker {
-    display: inline-flex;
-    align-items: center;
-    width: fit-content;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.22);
-    background: rgba(255,255,255,.10);
-    color: #dbeafe;
-    font-weight: 800;
-    font-size: .70rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    margin-bottom: 0;
-    backdrop-filter: blur(12px);
-}
-
-.hero-kicker span {
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: var(--red);
-    box-shadow: 0 0 0 0 rgba(227,6,19,.65);
-    animation: pulse 1.8s infinite;
-}
-
-@keyframes pulse {
-    70% { box-shadow: 0 0 0 9px rgba(227,6,19,0); }
-    100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
-}
-
-.hero h1 { display: none; }
-.hero h1 span { display: none; }
-.hero-description { display: none; }
-.hero-description strong { display: none; }
+.hero { display: none; }
 
 .app-title-card {
     position: relative;
@@ -725,10 +981,7 @@ st.markdown(
     100% { transform: translateX(100%); opacity: 0; }
 }
 
-.app-title-card > * {
-    position: relative;
-    z-index: 1;
-}
+.app-title-card > * { position: relative; z-index: 1; }
 
 .app-title-card h1 {
     margin: 0;
@@ -776,8 +1029,37 @@ st.markdown(
     box-sizing: border-box;
 }
 
-.header-copy {
-    min-width: 0;
+.header-copy { min-width: 0; }
+
+.hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.10);
+    color: #dbeafe;
+    font-weight: 800;
+    font-size: .70rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(12px);
+}
+
+.hero-kicker span {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--red);
+    box-shadow: 0 0 0 0 rgba(227,6,19,.65);
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    70% { box-shadow: 0 0 0 9px rgba(227,6,19,0); }
+    100% { box-shadow: 0 0 0 0 rgba(227,6,19,0); }
 }
 
 .glass-card {
@@ -788,13 +1070,6 @@ st.markdown(
     padding: 18px;
     margin-bottom: 14px;
     backdrop-filter: blur(18px);
-}
-
-.clean-toolbar {
-    display: grid;
-    grid-template-columns: minmax(240px, 1.6fr) minmax(180px, .7fr) minmax(160px, .55fr);
-    gap: 14px;
-    align-items: end;
 }
 
 .panel-title {
@@ -893,16 +1168,8 @@ st.markdown(
 
 .grid-row:first-of-type { border-top: none; }
 
-.label {
-    color: #9fb0d0;
-    font-size: .90rem;
-}
-
-.value {
-    color: #f8fbff;
-    font-weight: 700;
-    word-break: break-word;
-}
+.label { color: #9fb0d0; font-size: .90rem; }
+.value { color: #f8fbff; font-weight: 700; word-break: break-word; }
 
 .metric-strip {
     display: grid;
@@ -965,27 +1232,16 @@ def image_to_data_uri(path: str) -> str:
     if not file_path.exists():
         return ""
     suffix = file_path.suffix.lower()
-    if suffix in [".jpg", ".jpeg"]:
-        mime = "image/jpeg"
-    elif suffix == ".webp":
-        mime = "image/webp"
-    else:
-        mime = "image/png"
+    mime = "image/jpeg" if suffix in [".jpg", ".jpeg"] else "image/webp" if suffix == ".webp" else "image/png"
     encoded = base64.b64encode(file_path.read_bytes()).decode("utf-8")
     return f"data:{mime};base64,{encoded}"
 
 
 def find_logo_data_uri() -> str:
     possible_paths = [
-        "logo.png",
-        "logo.jpg",
-        "logo.jpeg",
-        "app/static/logo.png",
-        "app/static/logo.jpg",
-        "app/static/logo.jpeg",
-        "static/logo.png",
-        "static/logo.jpg",
-        "static/logo.jpeg",
+        "logo.png", "logo.jpg", "logo.jpeg",
+        "app/static/logo.png", "app/static/logo.jpg", "app/static/logo.jpeg",
+        "static/logo.png", "static/logo.jpg", "static/logo.jpeg",
     ]
     for path in possible_paths:
         data_uri = image_to_data_uri(path)
@@ -997,7 +1253,10 @@ def find_logo_data_uri() -> str:
 def render_hero():
     translator_status = "Online translation ready" if GoogleTranslator else "Offline fallback mode"
     logo_uri = find_logo_data_uri()
-    logo_html = f'<div class="header-logo"><img src="{logo_uri}" alt="Hospital logo"></div>' if logo_uri else '<div class="header-logo"></div>'
+    logo_html = (
+        f'<div class="header-logo"><img src="{logo_uri}" alt="Hospital logo"></div>'
+        if logo_uri else '<div class="header-logo"></div>'
+    )
 
     st.markdown(
         f"""
@@ -1014,14 +1273,6 @@ def render_hero():
 """,
         unsafe_allow_html=True,
     )
-
-
-def render_section(title, css_class, rows):
-    html = f'<div class="section {css_class}"><h3>{escape(title)}</h3>'
-    for label, value in rows:
-        html += f'<div class="grid-row"><div class="label">{escape(str(label))}</div><div class="value">{escape(str(value))}</div></div>'
-    html += "</div>"
-    return html
 
 
 def render_result(data):
@@ -1047,7 +1298,7 @@ def render_result(data):
     )
 
 
-def copy_button_component(text):
+def copy_button_component(text: str):
     safe = escape(text).replace("\n", "\\n").replace("'", "&#39;")
     components.html(
         f"""
@@ -1065,12 +1316,7 @@ def copy_button_component(text):
     cursor: pointer;
 }}
 .copy-btn:hover {{ filter: brightness(1.05); }}
-.msg {{
-    margin-top: 8px;
-    color: #94a3b8;
-    font-family: Inter, sans-serif;
-    font-size: 13px;
-}}
+.msg {{ margin-top: 8px; color: #94a3b8; font-family: Inter, sans-serif; font-size: 13px; }}
 </style>
 <button class="copy-btn" onclick="copyText()">Copy doctor message</button>
 <div id="msg" class="msg"></div>
@@ -1087,6 +1333,7 @@ function copyText() {{
 """,
         height=82,
     )
+
 
 # ─────────────────────────────────────────────
 # APP LAYOUT
@@ -1128,14 +1375,17 @@ with left:
     st.markdown(
         """
 <div class="info-note">
-The app follows the order: name, age, height, weight, chronic diseases, infections, surgeries, medications, allergies, smoke/alcohol.
+The app reads label:value format (Age: 35) and numbered lists. Field order: name → age → height → weight → chronic diseases → infections → surgeries → medications → allergies → smoke/alcohol.
 </div>
 """,
         unsafe_allow_html=True,
     )
 
 with right:
-    st.markdown('<div class="panel-title"><span class="panel-dot" style="background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8)"></span>Doctor-ready output</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="panel-title"><span class="panel-dot" style="background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8)"></span>Doctor-ready output</div>',
+        unsafe_allow_html=True,
+    )
 
     if clear:
         st.session_state.generated_data = None
@@ -1143,8 +1393,6 @@ with right:
         st.rerun()
 
     if generate:
-        # Always clear the previous output first, then generate the new result.
-        # This prevents old patient details from staying visible if the new input is empty or invalid.
         st.session_state.generated_data = None
         st.session_state.plain_message = ""
 
