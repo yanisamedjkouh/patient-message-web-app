@@ -1,5 +1,6 @@
 import re
 import base64
+import hashlib
 from pathlib import Path
 from html import escape
 
@@ -1065,12 +1066,13 @@ def render_result(data):
         return
 
     plain_text = data_to_plain_text(data)
+    message_key = hashlib.md5(plain_text.encode("utf-8")).hexdigest()[:12]
     st.text_area(
         "Doctor message",
         value=plain_text,
         height=520,
         label_visibility="collapsed",
-        key="doctor_message_text_area",
+        key=f"doctor_message_text_area_{message_key}",
     )
 
 
@@ -1137,7 +1139,6 @@ with top_c:
 left, right = st.columns([1, 1], gap="large")
 
 with left:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title"><span class="panel-dot"></span>Patient answers</div>', unsafe_allow_html=True)
     patient_text = st.text_area(
         "Paste raw patient answer",
@@ -1161,10 +1162,8 @@ The app follows the order: name, age, height, weight, chronic diseases, infectio
 """,
         unsafe_allow_html=True,
     )
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with right:
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title"><span class="panel-dot" style="background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8)"></span>Doctor-ready output</div>', unsafe_allow_html=True)
 
     if clear:
@@ -1188,7 +1187,6 @@ with right:
     if st.session_state.plain_message:
         copy_button_component(st.session_state.plain_message)
 
-    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown(
     """
