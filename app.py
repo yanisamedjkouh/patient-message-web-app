@@ -118,7 +118,6 @@ FIELD_LABEL_PATTERNS = {
 
 # ─── NONE / YES / SMOKE phrases ────────────────────────────────────────────────
 
-# FIX: Use word-boundary-safe phrases. We'll match these with \b in regex checks.
 NONE_PHRASES = {
     "English": ["no", "none", "nothing", "nope", "nil", "negative", "not any", "no any",
                 "no disease", "no diseases", "no infection", "no infections",
@@ -179,9 +178,6 @@ ALCOHOL_WORDS = {
     "German": ["alkohol", "trinke", "trinken", "wein", "bier"],
     "Turkish": ["alkol", "içki", "şarap", "sarap", "bira"],
 }
-
-# FIX: separated alcohol "içiyorum" from smoking in Turkish
-# "içiyorum" alone means "I drink" — pair with context word
 
 OCCASIONAL_WORDS = {
     "English": ["sometimes", "occasionally", "social", "socially", "rarely", "once in a while", "moderate"],
@@ -266,15 +262,10 @@ def normalize_text(text: str) -> str:
 
 
 def strip_leading_number(text: str) -> str:
-    """Remove leading list numbers that may appear in translated output.
-    E.g. '1. No chronic diseases' → 'No chronic diseases'
-         '2) None' → 'None'
-    """
     return re.sub(r"^\s*\d+\s*[\.)\-]\s*", "", text).strip()
 
 
 def word_in_text(word: str, text: str) -> bool:
-    """Case-insensitive whole-word check to avoid substring false positives."""
     pattern = r"(?<![a-zA-ZÀ-ÿ])" + re.escape(word) + r"(?![a-zA-ZÀ-ÿ])"
     return bool(re.search(pattern, text, flags=re.IGNORECASE))
 
@@ -284,7 +275,6 @@ def any_word_in_text(words: list, text: str) -> bool:
 
 
 def substr_in_text(substring: str, text: str) -> bool:
-    """Substring check (for multi-word phrases and stem fragments)."""
     return substring.lower() in text.lower()
 
 
@@ -303,21 +293,17 @@ def get_answer_lines(text: str) -> list:
 
         lower = line.lower().strip()
 
-        # Skip section header lines
         if lower.strip("*: -–—") in QUESTION_HEADERS:
             continue
 
-        # Skip numbered question prompts like "3. Medications:" (no answer part)
         if re.match(r"^\d+\s*[\.)\-]\s*", lower):
             after = re.sub(r"^\d+\s*[\.)\-]\s*", "", lower).strip()
             if any(kw in after for kw in QUESTION_KEYWORDS) and (after.endswith(":") or not after):
                 continue
 
-        # Skip parenthetical hint lines like "(please list your medications)"
         if lower.startswith("(") and lower.endswith(")"):
             continue
 
-        # If "label: value" format — strip the label, keep the value
         if ":" in line:
             before, after = line.split(":", 1)
             before_lower = before.lower().strip()
@@ -332,16 +318,11 @@ def get_answer_lines(text: str) -> list:
 
 
 def try_label_field_extract(text: str) -> dict:
-    """
-    Try to extract fields by looking for label:value patterns across the full text.
-    Returns a dict with whatever fields were found. Empty dict if nothing found.
-    """
     found = {}
     text = normalize_text(text)
 
     for field, patterns in FIELD_LABEL_PATTERNS.items():
         for pattern in patterns:
-            # Match "label: value" or "label - value"
             m = re.search(
                 r"(?:^|\n)\s*(?:\d+\s*[\.)\-]\s*)?" + pattern + r"\s*[:\-–—]\s*(.+?)(?=\n|$)",
                 text,
@@ -361,7 +342,6 @@ def try_label_field_extract(text: str) -> dict:
 # EXTRACTION: NAME
 # ─────────────────────────────────────────────
 
-# Words that are definitely NOT names
 _NAME_SKIP_WORDS = {
     "yes", "no", "none", "sometimes", "occasionally", "cm", "kg", "lb", "lbs",
     "years", "old", "yo", "oui", "non", "aucun", "aucune", "parfois",
@@ -372,7 +352,6 @@ _NAME_SKIP_WORDS = {
 
 def extract_name(lines: list) -> str:
     for line in lines:
-        # Strip leading numbers from the candidate line
         candidate = strip_leading_number(line)
         candidate = clean_line(candidate)
 
@@ -381,19 +360,15 @@ def extract_name(lines: list) -> str:
 
         lower = candidate.lower()
 
-        # Must contain at least one letter (handles multi-script names)
         if not re.search(r"[^\W\d]", candidate, re.UNICODE):
             continue
 
-        # Skip if it looks purely numeric (age, height, weight)
         if re.match(r"^\d[\d\s\.,ckmgftin\'\"]*$", lower):
             continue
 
-        # Skip if it's a known non-name word (whole-word check)
         if any(word_in_text(skip, lower) for skip in _NAME_SKIP_WORDS):
             continue
 
-        # Skip lines that are clearly about medical topics
         medical_triggers = [
             "disease", "infection", "surgery", "medication", "allergy",
             "smoke", "alcohol", "chronic", "kg", " cm", "bmi",
@@ -401,14 +376,30 @@ def extract_name(lines: list) -> str:
         if any(t in lower for t in medical_triggers):
             continue
 
-        # A name should be 1-4 tokens, each starting with a letter
         tokens = candidate.split()
         if 1 <= len(tokens) <= 5:
-            # Each token should start with a letter (Unicode-aware)
             if all(re.match(r"^[^\W\d]", t, re.UNICODE) for t in tokens):
                 return candidate
 
     return lines[0] if lines else ""
+
+
+# ─────────────────────────────────────────────
+# MEASUREMENT CONVERSION UTILITIES
+# ─────────────────────────────────────────────
+
+def stones_lbs_to_kg(stones: float, lbs: float = 0) -> int:
+    """Convert stones (and optional extra lbs) to kg."""
+    total_lbs = stones * 14 + lbs
+    return round(total_lbs * 0.453592)
+
+
+def lbs_to_kg(lbs: float) -> int:
+    return round(lbs * 0.453592)
+
+
+def feet_inches_to_cm(feet: float, inches: float = 0) -> int:
+    return round(feet * 30.48 + inches * 2.54)
 
 
 # ─────────────────────────────────────────────
@@ -418,7 +409,6 @@ def extract_name(lines: list) -> str:
 def extract_age_with_words(text: str) -> str:
     lower = text.lower()
 
-    # Explicit label patterns
     label_patterns = [
         r"(?:age|âge|vârst[aă]|varsta|edad|et[àa]|alter|ya[şs]|leeftijd)\s*[:\-]?\s*(\d{1,3})",
         r"(\d{1,3})\s*(?:years?\s*old|yo\b|y/o|ans\b|ani\b|años\b|anos\b|anni\b|jahre\b|yaşında|yasinda|jaar\b)",
@@ -433,21 +423,39 @@ def extract_age_with_words(text: str) -> str:
 
 
 def extract_height_with_units(text: str) -> int | None:
+    """
+    Extended height extraction supporting:
+    - cm / sm / centimeters
+    - m (meters) with decimal or separate
+    - ft/feet/′ with inches
+    - Single feet value (5'10)
+    - Written out: "5 feet 7 inches", "5 foot 7"
+    """
     lower = text.lower()
 
-    # FIX: feet/inches support — 5'7", 5 ft 7 in, 5'7
-    m = re.search(r"\b([4-7])\s*(?:\'|ft\.?|feet)\s*([0-9]|1[01])\s*(?:\"|''|in\.?|inch(?:es)?)?\b", lower)
+    # ── Feet + inches: 5'7", 5′7, 5 ft 7 in, 5 feet 7 inches, 5 foot 7 ──
+    # Pattern 1: 5'7" or 5′7 or 5'7
+    m = re.search(r"\b([3-8])\s*[\'′']\s*(\d{1,2})\s*(?:\"|''|″|in\.?|inch(?:es)?)?\b", lower)
     if m:
         feet, inches = int(m.group(1)), int(m.group(2))
-        return round(feet * 30.48 + inches * 2.54)
+        if 0 <= inches <= 11:
+            return feet_inches_to_cm(feet, inches)
 
-    # FIX: single feet value like 5'10 with no inches label
-    m = re.search(r"\b([4-7])[\'′]\s*(\d{1,2})\b", lower)
+    # Pattern 2: 5 ft 7 in / 5 feet 7 inches / 5 foot 7
+    m = re.search(r"\b([3-8])\s*(?:ft\.?|feet|foot)\s*(\d{1,2})\s*(?:in\.?|inch(?:es)?)?\b", lower)
     if m:
         feet, inches = int(m.group(1)), int(m.group(2))
-        return round(feet * 30.48 + inches * 2.54)
+        if 0 <= inches <= 11:
+            return feet_inches_to_cm(feet, inches)
 
-    # "1 m 75", "1,75 m", "1.75 m"
+    # Pattern 3: only feet, no inches — 5ft, 6 feet
+    m = re.search(r"\b([3-8])\s*(?:ft\.?|feet|foot)\b", lower)
+    if m:
+        feet = int(m.group(1))
+        return feet_inches_to_cm(feet, 0)
+
+    # ── Meters ──
+    # "1 m 75", "1,75 m", "1.75 m", "175 cm"
     m = re.search(r"\b([12])\s*(?:m|meter|meters|metre|metri|metro|metros)\s*[,\.]?\s*(\d{1,2})\s*(?:cm|sm)?\b", lower)
     if m:
         return int(m.group(1)) * 100 + int(m.group(2))
@@ -456,8 +464,8 @@ def extract_height_with_units(text: str) -> int | None:
     if m:
         return int(m.group(1)) * 100 + int(m.group(2))
 
-    # Explicit cm value
-    m = re.search(r"\b(1[2-9]\d|2[0-3]\d)\s*(?:cm|sm)\b", lower)
+    # ── Centimeters ──
+    m = re.search(r"\b(1[2-9]\d|2[0-3]\d)\s*(?:cm|sm|centimeters?|centimetres?)\b", lower)
     if m:
         return int(m.group(1))
 
@@ -465,19 +473,49 @@ def extract_height_with_units(text: str) -> int | None:
 
 
 def extract_weight_with_units(text: str) -> int | None:
+    """
+    Extended weight extraction supporting:
+    - kg / kilograms
+    - lbs / pounds
+    - stone / st (UK measurement)
+    - stone + lbs (e.g. "12 stone 4", "12 st 4 lbs")
+    """
     lower = text.lower()
-    # FIX: support decimal weights like 65.5 kg
+
+    # ── Stones + lbs: "12 stone 4", "12 st 4 lbs", "12 st 4lb" ──
+    m = re.search(r"\b(\d{1,2})\s*(?:stones?|st\.?)\s*(\d{1,2})\s*(?:lb|lbs|pounds?)?\b", lower)
+    if m:
+        stones, extra_lbs = int(m.group(1)), int(m.group(2))
+        if 3 <= stones <= 50 and 0 <= extra_lbs <= 13:
+            result = stones_lbs_to_kg(stones, extra_lbs)
+            if 25 <= result <= 300:
+                return result
+
+    # ── Stones only: "12 stone", "11 st" ──
+    m = re.search(r"\b(\d{1,2})\s*(?:stones?|st\.?)\b", lower)
+    if m:
+        stones = int(m.group(1))
+        if 3 <= stones <= 50:
+            result = stones_lbs_to_kg(stones)
+            if 25 <= result <= 300:
+                return result
+
+    # ── Pounds only: "150 lbs", "150 lb", "150 pounds" ──
+    m = re.search(r"\b(\d{2,3}(?:[.,]\d)?)\s*(?:lb|lbs|pounds?)\b", lower)
+    if m:
+        lbs_val = float(m.group(1).replace(",", "."))
+        if 55 <= lbs_val <= 660:
+            result = lbs_to_kg(lbs_val)
+            if 25 <= result <= 300:
+                return result
+
+    # ── Kilograms: "70 kg", "70.5 kg", "70,5 kg" ──
     m = re.search(r"\b(\d{2,3}(?:[.,]\d)?)\s*(?:kg|kgs|kilograms?|kilogramme|kilograme|kilo)\b", lower)
     if m:
         weight = float(m.group(1).replace(",", "."))
         if 25 <= weight <= 300:
             return round(weight)
-    # FIX: also handle lbs
-    m = re.search(r"\b(\d{2,3})\s*(?:lb|lbs|pounds?)\b", lower)
-    if m:
-        lbs = int(m.group(1))
-        if 55 <= lbs <= 660:
-            return round(lbs * 0.4536)
+
     return None
 
 
@@ -489,10 +527,6 @@ def calculate_bmi(height_cm: int | None, weight_kg: int | None) -> str:
 
 
 def extract_age_height_weight_by_order(lines: list) -> tuple:
-    """
-    FIX: Try unit-aware extraction from the full text first.
-    Fall back to positional heuristic only if needed.
-    """
     full_text = "\n".join(lines)
     height_cm = extract_height_with_units(full_text)
     weight_kg = extract_weight_with_units(full_text)
@@ -502,10 +536,8 @@ def extract_age_height_weight_by_order(lines: list) -> tuple:
     name_index = next((idx for idx, line in enumerate(lines) if line == name), None)
     start = 1 if name_index is None else name_index + 1
 
-    # Positional fallback for numbers without units
     numeric_lines = []
     for idx in range(start, len(lines)):
-        # Strip leading list numbers before reading numeric values
         candidate = strip_leading_number(lines[idx])
         numbers = re.findall(r"\d+(?:[.,]\d+)?", candidate)
         if numbers:
@@ -534,7 +566,7 @@ def extract_age_height_weight_by_order(lines: list) -> tuple:
 
 
 # ─────────────────────────────────────────────
-# NONE DETECTION (FIX: word-boundary safe)
+# NONE DETECTION
 # ─────────────────────────────────────────────
 
 def words_for(language: str, dictionary: dict) -> list:
@@ -545,14 +577,9 @@ def words_for(language: str, dictionary: dict) -> list:
 
 
 def _is_none_answer(answer: str, patient_language: str) -> bool:
-    """
-    FIX: Use whole-word matching for short ambiguous words like 'no', 'none', 'nee', 'nu'.
-    Longer phrases are still matched as substrings (safe because they're specific).
-    """
     text = answer.lower().strip()
     none_phrases = words_for(patient_language, NONE_PHRASES)
 
-    # Short ambiguous words that need word-boundary protection
     boundary_words = {"no", "none", "nee", "nu", "nein", "non", "yok", "geen", "nada",
                       "nil", "nope", "ja", "si", "da"}
 
@@ -568,7 +595,6 @@ def _is_none_answer(answer: str, patient_language: str) -> bool:
 
 
 def _has_exception_clause(answer: str) -> bool:
-    """Check if a 'none' answer has an exception clause attached."""
     exception_words = [
         "but", "except", "only", "however", "although",
         "mais", "sauf", "pero", "ma", "ama", "maar", "behalve",
@@ -594,7 +620,6 @@ def online_translate_text(text: str, patient_language: str, doctor_language: str
     try:
         translated = GoogleTranslator(source=source, target=target).translate(text)
         result = clean_line(translated) if translated else text
-        # FIX: strip leading list number that translator sometimes adds
         result = strip_leading_number(result)
         return result
     except Exception:
@@ -606,7 +631,6 @@ def translate_patient_detail(answer: str, patient_language: str, doctor_language
     if not answer:
         return ""
     translated = online_translate_text(answer, patient_language, doctor_language)
-    # FIX: strip any leading number that leaked through translation
     return strip_leading_number(translated)
 
 
@@ -631,7 +655,6 @@ def normalize_answer(answer: str, patient_language: str, doctor_language: str) -
     if not answer:
         return ""
 
-    # FIX: word-boundary safe none detection + exception clause check
     if _is_none_answer(answer, patient_language) and not _has_exception_clause(answer):
         return translate_basic_answer("__NONE__", doctor_language)
 
@@ -674,12 +697,10 @@ def normalize_smoke_alcohol(answer: str, patient_language: str, doctor_language:
     alcohol_words = words_for(patient_language, ALCOHOL_WORDS)
     occasional_words = words_for(patient_language, OCCASIONAL_WORDS)
 
-    # FIX: use substring check for stems (smoke→smok, drink→drink)
     has_smoke = any(substr_in_text(w, lower) for w in smoke_words)
     has_alcohol = any(substr_in_text(w, lower) for w in alcohol_words)
     occasional = any(substr_in_text(w, lower) for w in occasional_words)
 
-    # Pure "occasionally" with no further detail
     if occasional and not has_smoke and not has_alcohol:
         return translate_basic_answer("__OCCASIONALLY__", doctor_language)
 
@@ -736,18 +757,13 @@ def clean_requirement(requirement: str) -> str:
 
 
 # ─────────────────────────────────────────────
-# FIELD MAPPING (smart label-based + positional fallback)
+# FIELD MAPPING
 # ─────────────────────────────────────────────
 
 _FIELD_ORDER = ["name", "age", "height", "weight", "chronic", "infection", "surgery", "medication", "allergy", "smoke_alcohol"]
 
 
 def get_order_based_answers(lines: list, label_extracted: dict) -> dict:
-    """
-    FIX: First try to use label_extracted (from label:value scanning).
-    For any missing fields, fall back to positional ordering.
-    """
-    # Start with whatever we found via label scanning
     answers = {
         "name": label_extracted.get("name", ""),
         "chronic": label_extracted.get("chronic", ""),
@@ -758,19 +774,16 @@ def get_order_based_answers(lines: list, label_extracted: dict) -> dict:
         "smoke_alcohol": label_extracted.get("smoke_alcohol", ""),
     }
 
-    # If we got a good chunk from labels, we're done
     filled = sum(1 for v in answers.values() if v)
     if filled >= 4:
         return answers
 
-    # Positional fallback
     name = extract_name(lines) if not answers["name"] else answers["name"]
     answers["name"] = name
     remaining = [line for line in lines if line != name]
     personal_numbers, rest = [], []
 
     for line in remaining:
-        # Strip list numbers before classification
         candidate = strip_leading_number(line)
         if len(personal_numbers) < 3 and re.search(r"\d", candidate):
             personal_numbers.append(candidate)
@@ -809,7 +822,6 @@ def format_patient_message(
     if not lines:
         return None
 
-    # Try label-based extraction first (handles "Age: 35" style)
     label_extracted = try_label_field_extract(patient_text)
 
     detected_requirement = extract_patient_requirement_from_text(lines)
@@ -822,7 +834,6 @@ def format_patient_message(
     answers = get_order_based_answers(lines, label_extracted)
     age, height_cm, weight_kg = extract_age_height_weight_by_order(lines)
 
-    # Override with label_extracted values if present
     if label_extracted.get("age"):
         age = extract_age_with_words(label_extracted["age"]) or age
     if label_extracted.get("height"):
@@ -900,7 +911,7 @@ def data_to_plain_text(data: dict) -> str:
 
 
 # ─────────────────────────────────────────────
-# UI CSS (unchanged from original)
+# UI CSS
 # ─────────────────────────────────────────────
 
 st.markdown(
@@ -1209,6 +1220,30 @@ st.markdown(
     background: rgba(255,255,255,.06);
 }
 
+.auto-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(52, 211, 153, .35);
+    background: rgba(52, 211, 153, .12);
+    color: #6ee7b7;
+    font-size: .70rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.auto-badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34d399;
+    animation: pulse 1.8s infinite;
+}
+
 hr { border-color: rgba(255,255,255,0.10); }
 
 @media (max-width: 900px) {
@@ -1265,7 +1300,7 @@ def render_hero():
     {logo_html}
     <div class="header-copy">
       <h1>Clinical Intake Formatter</h1>
-      <p>A simple tool for turning multilingual patient answers into a clean doctor message in <strong>English</strong> or <strong>Turkish</strong>.</p>
+      <p>Paste patient answers — output formats instantly. Supports cm, m, ft/in, lbs, stones · English &amp; Turkish output.</p>
     </div>
   </div>
   <div class="hero-kicker"><span></span>{translator_status}</div>
@@ -1280,7 +1315,7 @@ def render_result(data):
         st.markdown(
             """
 <div class="result-card">
-  <div class="info-note">Your doctor message will appear here after you click <b>Generate message</b>.</div>
+  <div class="info-note">Your doctor message will appear here automatically as you paste patient data.</div>
 </div>
 """,
             unsafe_allow_html=True,
@@ -1336,6 +1371,26 @@ function copyText() {{
 
 
 # ─────────────────────────────────────────────
+# AUTO-FORMAT CALLBACK
+# ─────────────────────────────────────────────
+
+def run_format():
+    """Called on_change of the patient text area — auto-formats immediately."""
+    text = st.session_state.get("patient_text_input", "")
+    req = st.session_state.get("requirement_input", "")
+    pat_lang = st.session_state.get("patient_language_select", "English")
+    doc_lang = st.session_state.get("doctor_language_select", "English")
+
+    if text.strip():
+        data = format_patient_message(text, req, pat_lang, doc_lang)
+        st.session_state.generated_data = data
+        st.session_state.plain_message = data_to_plain_text(data) if data else ""
+    else:
+        st.session_state.generated_data = None
+        st.session_state.plain_message = ""
+
+
+# ─────────────────────────────────────────────
 # APP LAYOUT
 # ─────────────────────────────────────────────
 
@@ -1348,34 +1403,64 @@ if "plain_message" not in st.session_state:
 
 top_a, top_b, top_c = st.columns([2.2, 1, 1])
 with top_a:
-    requirement = st.text_input("Patient wants", placeholder="breast lift, rhinoplasty, lipoabdominoplasty…")
+    requirement = st.text_input(
+        "Patient wants",
+        placeholder="breast lift, rhinoplasty, lipoabdominoplasty…",
+        key="requirement_input",
+        on_change=run_format,
+    )
 with top_b:
-    patient_language = st.selectbox("Patient language", PATIENT_LANGUAGES, index=0)
+    patient_language = st.selectbox(
+        "Patient language",
+        PATIENT_LANGUAGES,
+        index=0,
+        key="patient_language_select",
+        on_change=run_format,
+    )
 with top_c:
-    doctor_language = st.selectbox("Doctor message", DOCTOR_MESSAGE_LANGUAGES, index=0)
+    doctor_language = st.selectbox(
+        "Doctor message",
+        DOCTOR_MESSAGE_LANGUAGES,
+        index=0,
+        key="doctor_language_select",
+        on_change=run_format,
+    )
 
 left, right = st.columns([1, 1], gap="large")
 
 with left:
-    st.markdown('<div class="panel-title"><span class="panel-dot"></span>Patient answers</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="panel-title"><span class="panel-dot"></span>Patient answers</div>'
+        '<div class="auto-badge"><span class="auto-badge-dot"></span>Auto-formats on paste</div>',
+        unsafe_allow_html=True,
+    )
     patient_text = st.text_area(
         "Paste raw patient answer",
         value="",
-        placeholder="Paste the patient's answers here...",
+        placeholder="Paste the patient's answers here — output appears instantly…",
         height=320,
         label_visibility="collapsed",
+        key="patient_text_input",
+        on_change=run_format,
     )
 
     b1, b2 = st.columns([1.35, 1])
     with b1:
-        generate = st.button("Generate message", type="primary", use_container_width=True)
+        # Manual trigger still available as fallback
+        if st.button("Generate message", type="primary", use_container_width=True):
+            run_format()
+            st.rerun()
     with b2:
-        clear = st.button("Clear", use_container_width=True)
+        if st.button("Clear", use_container_width=True):
+            st.session_state.generated_data = None
+            st.session_state.plain_message = ""
+            st.rerun()
 
     st.markdown(
         """
 <div class="info-note">
-The app reads label:value format (Age: 35) and numbered lists. Field order: name → age → height → weight → chronic diseases → infections → surgeries → medications → allergies → smoke/alcohol.
+<strong>Measurements auto-converted:</strong> cm · m · ft/in · lbs · stones+lbs → kg &amp; cm<br>
+<strong>Field order (fallback):</strong> name → age → height → weight → chronic → infections → surgeries → medications → allergies → smoke/alcohol
 </div>
 """,
         unsafe_allow_html=True,
@@ -1386,20 +1471,6 @@ with right:
         '<div class="panel-title"><span class="panel-dot" style="background:#34d399; box-shadow:0 0 14px rgba(52,211,153,.8)"></span>Doctor-ready output</div>',
         unsafe_allow_html=True,
     )
-
-    if clear:
-        st.session_state.generated_data = None
-        st.session_state.plain_message = ""
-        st.rerun()
-
-    if generate:
-        st.session_state.generated_data = None
-        st.session_state.plain_message = ""
-
-        with st.spinner("Formatting and translating…"):
-            data = format_patient_message(patient_text, requirement, patient_language, doctor_language)
-            st.session_state.generated_data = data
-            st.session_state.plain_message = data_to_plain_text(data) if data else ""
 
     render_result(st.session_state.generated_data)
 
