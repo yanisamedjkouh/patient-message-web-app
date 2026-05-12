@@ -7,7 +7,6 @@ from html import escape
 import streamlit as st
 import streamlit.components.v1 as components
 
-try:
 from deep_translator import GoogleTranslator
 except ImportError:
 GoogleTranslator = None
