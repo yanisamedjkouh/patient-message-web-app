@@ -213,7 +213,7 @@ LABELS = {
         "occasionally": "Occasionally",
         "occasionally_smokes": "Occasionally smokes",
         "occasionally_drinks": "Occasionally drinks alcohol",
-        "occasionally_smokes_drinks": "Occasionally smokes & drinks alcohol",
+        "occasionally_smokes_drinks": "Occasionally smokes and drinks alcohol",
         "yo": "yo",
     },
     "Turkish": {
