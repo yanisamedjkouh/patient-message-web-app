@@ -1105,7 +1105,7 @@ st.markdown(
 
 .stTextArea textarea, .stTextInput input {
     background: var(--field) !important;
-    color: #2a2f3e !important;
+    color: #FF0000 !important;
     border: 1px solid rgba(255,255,255,0.16) !important;
     border-radius: 18px !important;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.02) !important;
